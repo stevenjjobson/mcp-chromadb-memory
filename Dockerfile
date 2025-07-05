@@ -28,4 +28,10 @@ ENV DOCKER_CONTAINER=true
 
 USER mcpuser
 
+# Suppress npm fund message and other npm output
+ENV npm_config_fund=false
+ENV npm_config_audit=false
+ENV npm_config_update_notifier=false
+ENV npm_config_loglevel=error
+
 CMD ["node", "dist/index.js"]

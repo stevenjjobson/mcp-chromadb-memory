@@ -4,7 +4,13 @@ import path from 'path';
 import fs from 'fs';
 
 // Load .env file - handle Windows paths
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+// Suppress dotenv console output by redirecting process.stdout temporarily
+const originalWrite = process.stdout.write;
+process.stdout.write = () => true;
+dotenv.config({ 
+  path: path.resolve(process.cwd(), '.env')
+});
+process.stdout.write = originalWrite;
 
 // Helper function to read from Docker secrets or environment variables
 function getSecret(secretName: string, envVar: string): string | undefined {
