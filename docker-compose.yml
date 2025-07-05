@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: chromadb-memory
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/chroma:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - memory-network
+
+  mcp-memory:
+    build: .
+    container_name: mcp-memory-server
+    restart: unless-stopped
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DOCKER_CONTAINER=true
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - MEMORY_IMPORTANCE_THRESHOLD=${MEMORY_IMPORTANCE_THRESHOLD:-0.7}
+      - MEMORY_COLLECTION_NAME=${MEMORY_COLLECTION_NAME:-ai_memories}
+      - MAX_MEMORY_RESULTS=${MAX_MEMORY_RESULTS:-10}
+      - MCP_SERVER_NAME=${MCP_SERVER_NAME:-ai-memory-server}
+      - MCP_SERVER_VERSION=${MCP_SERVER_VERSION:-1.0.0}
+    volumes:
+      - ./data/memories:/app/data
+    networks:
+      - memory-network
+    command: ["node", "dist/index.js"]
+
+networks:
+  memory-network:
+    driver: bridge
