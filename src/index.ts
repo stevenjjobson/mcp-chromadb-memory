@@ -10,6 +10,7 @@ import {
 import { z } from 'zod';
 import { config } from './config.js';
 import { MemoryManager } from './memory-manager.js';
+import { ObsidianManager } from './obsidian-manager.js';
 
 // Handle Windows-specific process signals
 if (process.platform === "win32") {
@@ -39,6 +40,7 @@ const server = new Server(
 
 // Initialize memory manager (to be implemented)
 let memoryManager: MemoryManager;
+let obsidianManager: ObsidianManager | null = null;
 
 // Update the tools list in ListToolsRequestSchema handler
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -97,6 +99,142 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             }
           },
           required: ['query']
+        },
+      },
+      {
+        name: 'read_obsidian_note',
+        description: 'Read a specific note from the Obsidian vault',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            notePath: {
+              type: 'string',
+              description: 'Path to the note relative to vault root (e.g., "Daily Notes/2024-01-01.md")'
+            }
+          },
+          required: ['notePath']
+        },
+      },
+      {
+        name: 'list_obsidian_notes',
+        description: 'List all notes in the vault or a specific folder',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            folderPath: {
+              type: 'string',
+              description: 'Optional folder path to list notes from',
+              default: ''
+            }
+          }
+        },
+      },
+      {
+        name: 'search_obsidian_vault',
+        description: 'Search for notes in the Obsidian vault using semantic search',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Search query'
+            },
+            limit: {
+              type: 'number',
+              description: 'Maximum number of results',
+              default: 10
+            }
+          },
+          required: ['query']
+        },
+      },
+      {
+        name: 'write_obsidian_note',
+        description: 'Create or update a note in the Obsidian vault',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            notePath: {
+              type: 'string',
+              description: 'Path where to save the note'
+            },
+            content: {
+              type: 'string',
+              description: 'Content of the note'
+            },
+            frontmatter: {
+              type: 'object',
+              description: 'Optional frontmatter metadata',
+              default: {}
+            }
+          },
+          required: ['notePath', 'content']
+        },
+      },
+      {
+        name: 'get_obsidian_backlinks',
+        description: 'Get all notes that link to a specific note',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            notePath: {
+              type: 'string',
+              description: 'Path to the note to find backlinks for'
+            }
+          },
+          required: ['notePath']
+        },
+      },
+      {
+        name: 'index_obsidian_vault',
+        description: 'Index Obsidian vault notes into ChromaDB for fast semantic search',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            folders: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Specific folders to index (optional)'
+            },
+            tags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Only index notes with these tags (optional)'
+            },
+            forceReindex: {
+              type: 'boolean',
+              description: 'Force reindexing of all notes',
+              default: false
+            },
+            dryRun: {
+              type: 'boolean',
+              description: 'Preview what would be indexed without actually indexing',
+              default: false
+            }
+          }
+        },
+      },
+      {
+        name: 'get_obsidian_index_status',
+        description: 'Get the current status of the Obsidian vault index',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        },
+      },
+      {
+        name: 'clear_obsidian_index',
+        description: 'Clear all indexed Obsidian notes from ChromaDB',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            confirm: {
+              type: 'boolean',
+              description: 'Confirm clearing the index',
+              default: false
+            }
+          },
+          required: ['confirm']
         },
       }
     ],
@@ -174,6 +312,193 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
       }
+
+      case 'read_obsidian_note': {
+        if (!obsidianManager) {
+          throw new Error('Obsidian vault not configured');
+        }
+        const note = await obsidianManager.readNote(args?.notePath as string);
+        if (!note) {
+          throw new Error(`Note not found: ${args?.notePath}`);
+        }
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                title: note.title,
+                content: note.content,
+                frontmatter: note.frontmatter,
+                tags: note.tags,
+                links: note.links,
+                createdAt: note.createdAt,
+                modifiedAt: note.modifiedAt
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'list_obsidian_notes': {
+        if (!obsidianManager) {
+          throw new Error('Obsidian vault not configured');
+        }
+        const notes = await obsidianManager.listNotes(args?.folderPath as string || '');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                count: notes.length,
+                notes: notes
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'search_obsidian_vault': {
+        if (!obsidianManager) {
+          throw new Error('Obsidian vault not configured');
+        }
+        const results = await obsidianManager.searchNotes(
+          args?.query as string,
+          args?.limit as number || 10
+        );
+        const formattedResults = results.map(r => ({
+          path: r.note.path,
+          title: r.note.title,
+          score: r.score.toFixed(3),
+          excerpt: r.excerpt,
+          tags: r.note.tags
+        }));
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(formattedResults, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'write_obsidian_note': {
+        if (!obsidianManager) {
+          throw new Error('Obsidian vault not configured');
+        }
+        const success = await obsidianManager.writeNote(
+          args?.notePath as string,
+          args?.content as string,
+          args?.frontmatter as Record<string, any>
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success,
+                notePath: args?.notePath,
+                message: success ? 'Note saved successfully' : 'Failed to save note'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'get_obsidian_backlinks': {
+        if (!obsidianManager) {
+          throw new Error('Obsidian vault not configured');
+        }
+        const backlinks = await obsidianManager.getBacklinks(args?.notePath as string);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                notePath: args?.notePath,
+                backlinks: backlinks,
+                count: backlinks.length
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'index_obsidian_vault': {
+        if (!obsidianManager) {
+          throw new Error('Obsidian vault not configured');
+        }
+        
+        const options = {
+          folders: args?.folders as string[] || undefined,
+          tags: args?.tags as string[] || undefined,
+          forceReindex: args?.forceReindex as boolean || false,
+          dryRun: args?.dryRun as boolean || false
+        };
+        
+        const progress = await obsidianManager.indexVault(options);
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                ...progress,
+                estimatedCost: `$${progress.estimatedCost.toFixed(4)}`,
+                message: options.dryRun ? 
+                  'Dry run completed - no notes were actually indexed' : 
+                  'Indexing completed successfully'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'get_obsidian_index_status': {
+        if (!obsidianManager) {
+          throw new Error('Obsidian vault not configured');
+        }
+        
+        const status = await obsidianManager.getIndexStatus();
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                ...status,
+                percentIndexed: status.totalNotes > 0 ? 
+                  `${((status.indexedNotes / status.totalNotes) * 100).toFixed(1)}%` : 
+                  '0%'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'clear_obsidian_index': {
+        if (!obsidianManager) {
+          throw new Error('Obsidian vault not configured');
+        }
+        
+        if (!args?.confirm) {
+          throw new Error('Please confirm clearing the index by setting confirm: true');
+        }
+        
+        await obsidianManager.clearIndex();
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: 'Obsidian index cleared successfully'
+              }, null, 2)
+            }
+          ]
+        };
+      }
         
       default:
         throw new Error(`Unknown tool: ${name}`);
@@ -215,6 +540,17 @@ async function main() {
     await memoryManager.initialize();
     
     console.error('Memory manager initialized successfully');
+    
+    // Initialize Obsidian manager if vault path is configured
+    const vaultPath = process.env.OBSIDIAN_VAULT_PATH;
+    if (vaultPath) {
+      console.error(`Initializing Obsidian manager with vault: ${vaultPath}`);
+      obsidianManager = new ObsidianManager(vaultPath, memoryManager.getChromaClient());
+      await obsidianManager.initialize();
+      console.error('Obsidian manager initialized successfully');
+    } else {
+      console.error('Obsidian vault path not configured, skipping Obsidian integration');
+    }
     
     // Start stdio transport
     const transport = new StdioServerTransport();

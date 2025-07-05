@@ -93,10 +93,6 @@ export class MemoryManager {
     }
   }
   
-  async close(): Promise<void> {
-    // Cleanup if needed
-    console.error('Memory manager closed');
-  }
   
   private async generateEmbedding(text: string): Promise<number[]> {
     const response = await this.openai.embeddings.create({
@@ -313,5 +309,14 @@ export class MemoryManager {
     } catch (error) {
       console.error(`Error updating access count for ${memoryId}:`, error);
     }
+  }
+  
+  async close() {
+    // ChromaDB client doesn't require explicit closure
+    console.error('Memory manager closed');
+  }
+  
+  getChromaClient(): ChromaClient {
+    return this.client;
   }
 }

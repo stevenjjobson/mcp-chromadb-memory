@@ -36,6 +36,7 @@ This guide will help you set up the MCP ChromaDB Memory Server with Claude Deskt
         "run",
         "-i",
         "--rm",
+        "--name", "claude-mcp-memory",
         "--network", "mcp-chromadb-memory_memory-network",
         "-e", "OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE",
         "-e", "DOCKER_CONTAINER=true",

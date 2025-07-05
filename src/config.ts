@@ -1,9 +1,26 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
 import path from 'path';
+import fs from 'fs';
 
 // Load .env file - handle Windows paths
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+// Helper function to read from Docker secrets or environment variables
+function getSecret(secretName: string, envVar: string): string | undefined {
+  // First, try to read from Docker secret file
+  const secretPath = `/run/secrets/${secretName}`;
+  if (fs.existsSync(secretPath)) {
+    try {
+      return fs.readFileSync(secretPath, 'utf-8').trim();
+    } catch (error) {
+      console.error(`Failed to read secret from ${secretPath}:`, error);
+    }
+  }
+  
+  // Fall back to environment variable
+  return process.env[envVar];
+}
 
 const ConfigSchema = z.object({
   chromaHost: z.string().default('localhost'),
@@ -23,7 +40,7 @@ const isDocker = process.env.DOCKER_CONTAINER === 'true';
 export const config = ConfigSchema.parse({
   chromaHost: isDocker ? 'chromadb' : (process.env.CHROMA_HOST || 'localhost'),
   chromaPort: process.env.CHROMA_PORT,
-  openaiApiKey: process.env.OPENAI_API_KEY,
+  openaiApiKey: getSecret('openai_api_key', 'OPENAI_API_KEY'),
   memoryImportanceThreshold: parseFloat(process.env.MEMORY_IMPORTANCE_THRESHOLD || '0.7'),
   memoryCollectionName: process.env.MEMORY_COLLECTION_NAME,
   maxMemoryResults: parseInt(process.env.MAX_MEMORY_RESULTS || '10'),
