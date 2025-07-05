@@ -26,6 +26,8 @@ The MCP ChromaDB Memory Server enables AI assistants like Claude to maintain per
 - 🔍 **Intelligent Retrieval** - Multi-factor scoring combines semantic similarity, recency, importance, and access frequency
 - 🎯 **Context-Aware** - Supports different memory contexts (general, user preferences, critical tasks, notes)
 - 📊 **Smart Scoring** - Retrieval uses weighted scoring: Semantic (40%), Recency (30%), Importance (20%), Frequency (10%)
+- 📝 **Obsidian Integration** - Read, write, and search notes in your Obsidian vault with semantic search
+- 📚 **Session Logging** - Automatically log Claude Code conversations to Obsidian with summaries and code highlights
 - 🔄 **Memory Consolidation** - Prevents redundancy by merging similar memories (coming soon)
 
 ## 📋 Requirements
@@ -100,7 +102,10 @@ CHROMA_HOST=chromadb          # Use 'localhost' for local development
 CHROMA_PORT=8000
 
 # OpenAI Configuration (required for embeddings)
-OPENAI_API_KEY=your-api-key-here
+# API key is stored securely in Docker secrets - see Security section below
+
+# Obsidian Integration (optional)
+OBSIDIAN_VAULT_PATH=/path/to/your/vault
 
 # Memory Configuration
 MEMORY_IMPORTANCE_THRESHOLD=0.7    # Minimum importance score to store (0-1)
@@ -131,10 +136,11 @@ MCP_SERVER_VERSION=1.0.0
         "-i",
         "--rm",
         "--network", "mcp-chromadb-memory_memory-network",
-        "-e", "OPENAI_API_KEY=your-api-key-here",
+        "-v", "C:/Users/Steve/Obsidian/StevesVault:/vault:ro",
         "-e", "DOCKER_CONTAINER=true",
         "-e", "CHROMA_HOST=chromadb",
         "-e", "CHROMA_PORT=8000",
+        "-e", "OBSIDIAN_VAULT_PATH=/vault",
         "mcp-chromadb-memory-mcp-memory"
       ]
     }
@@ -228,6 +234,39 @@ Verifies server status and ChromaDB connection.
   "docker": true
 }
 ```
+
+### Session Logging Tools
+
+#### `start_session_logging`
+Begins logging a Claude Code session to Obsidian.
+
+```typescript
+{
+  project?: string;     // Project name (default: "General")
+}
+```
+
+#### `save_session_log`
+Saves the current session to Obsidian with auto-generated summary.
+
+```typescript
+{
+  summary?: string;     // Optional manual summary
+}
+```
+
+#### `log_session_event`
+Manually logs specific events during the session.
+
+```typescript
+{
+  type: string;         // Event type: user, assistant, tool, decision, achievement
+  content: string;      // Event content
+  metadata?: object;    // Additional metadata
+}
+```
+
+See [SESSION_LOGGING.md](SESSION_LOGGING.md) for detailed usage.
 
 ## 🏗️ Architecture
 

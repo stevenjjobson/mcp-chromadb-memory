@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { config } from './config.js';
 import { MemoryManager } from './memory-manager.js';
 import { ObsidianManager } from './obsidian-manager.js';
+import { SessionLogger } from './session-logger.js';
 
 // Handle Windows-specific process signals
 if (process.platform === "win32") {
@@ -41,6 +42,7 @@ const server = new Server(
 // Initialize memory manager (to be implemented)
 let memoryManager: MemoryManager;
 let obsidianManager: ObsidianManager | null = null;
+let sessionLogger: SessionLogger | null = null;
 
 // Update the tools list in ListToolsRequestSchema handler
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -235,6 +237,57 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             }
           },
           required: ['confirm']
+        },
+      },
+      {
+        name: 'start_session_logging',
+        description: 'Start logging this Claude Code session to Obsidian',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            project: {
+              type: 'string',
+              description: 'Project name for this session',
+              default: 'General'
+            }
+          }
+        },
+      },
+      {
+        name: 'save_session_log',
+        description: 'Save the current session log to Obsidian',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            summary: {
+              type: 'string',
+              description: 'Optional manual summary of the session'
+            }
+          }
+        },
+      },
+      {
+        name: 'log_session_event',
+        description: 'Log a specific event or decision to the session',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            type: {
+              type: 'string',
+              description: 'Type of event (user, assistant, tool, decision, achievement)',
+              enum: ['user', 'assistant', 'tool', 'decision', 'achievement']
+            },
+            content: {
+              type: 'string',
+              description: 'Content to log'
+            },
+            metadata: {
+              type: 'object',
+              description: 'Additional metadata',
+              default: {}
+            }
+          },
+          required: ['type', 'content']
         },
       }
     ],
@@ -494,6 +547,96 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: JSON.stringify({
                 success: true,
                 message: 'Obsidian index cleared successfully'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'start_session_logging': {
+        if (!obsidianManager) {
+          throw new Error('Obsidian vault not configured');
+        }
+        
+        const project = args?.project as string || 'General';
+        sessionLogger = new SessionLogger(obsidianManager, project);
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: `Started logging session for project: ${project}`,
+                sessionId: sessionLogger.getSessionSummary().startTime.toISOString()
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'save_session_log': {
+        if (!sessionLogger) {
+          throw new Error('No active session to save. Use start_session_logging first.');
+        }
+        
+        const summary = args?.summary as string || undefined;
+        const notePath = await sessionLogger.saveSession(summary);
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: 'Session saved to Obsidian',
+                notePath,
+                summary: sessionLogger.getSessionSummary()
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'log_session_event': {
+        if (!sessionLogger) {
+          throw new Error('No active session. Use start_session_logging first.');
+        }
+        
+        const eventType = args?.type as string;
+        const content = args?.content as string;
+        
+        switch (eventType) {
+          case 'user':
+            sessionLogger.logUserMessage(content);
+            break;
+          case 'assistant':
+            sessionLogger.logAssistantMessage(content);
+            break;
+          case 'tool':
+            sessionLogger.logToolUse((args?.metadata as any)?.toolName || 'unknown', content);
+            break;
+          case 'decision':
+            sessionLogger.getSessionSummary().decisions.push(content);
+            break;
+          case 'achievement':
+            sessionLogger.getSessionSummary().achievements.push(content);
+            break;
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: `Logged ${eventType} event`,
+                currentSummary: {
+                  topics: sessionLogger.getSessionSummary().mainTopics.length,
+                  tools: sessionLogger.getSessionSummary().toolsUsed.size,
+                  decisions: sessionLogger.getSessionSummary().decisions.length,
+                  achievements: sessionLogger.getSessionSummary().achievements.length
+                }
               }, null, 2)
             }
           ]
