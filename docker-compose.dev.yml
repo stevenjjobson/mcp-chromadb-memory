@@ -1,0 +1,28 @@
+# Development override - includes MCP server for testing
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+services:
+  mcp-memory:
+    build: .
+    container_name: mcp-memory-server-dev
+    restart: "no"
+    depends_on:
+      - chromadb
+    environment:
+      - DOCKER_CONTAINER=true
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - MEMORY_IMPORTANCE_THRESHOLD=${MEMORY_IMPORTANCE_THRESHOLD:-0.7}
+      - MEMORY_COLLECTION_NAME=${MEMORY_COLLECTION_NAME:-ai_memories}
+      - MAX_MEMORY_RESULTS=${MAX_MEMORY_RESULTS:-10}
+      - MCP_SERVER_NAME=${MCP_SERVER_NAME:-ai-memory-server}
+      - MCP_SERVER_VERSION=${MCP_SERVER_VERSION:-1.0.0}
+    secrets:
+      - openai_api_key
+      - github_access_token
+    volumes:
+      - ./data/memories:/app/data
+      - C:/Users/Steve/Obsidian/StevesVault:/vault:ro
+    networks:
+      - memory-network
+    command: ["node", "dist/index.js"]

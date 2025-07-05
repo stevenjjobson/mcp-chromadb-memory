@@ -54,8 +54,14 @@ The MCP ChromaDB Memory Server enables AI assistants like Claude to maintain per
 
 3. **Start services**
    ```bash
-   docker-compose up -d
+   # For Claude Desktop - start only ChromaDB
+   docker-compose up -d chromadb
+   
+   # Or use the convenience script (Windows)
+   .\start-chromadb.ps1
    ```
+   
+   **Note**: Claude Desktop creates its own MCP container automatically. You only need ChromaDB running.
 
 4. **Verify installation**
    ```bash
