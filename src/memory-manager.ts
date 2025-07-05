@@ -30,11 +30,13 @@ export class MemoryManager {
   constructor(private config: Config) {
     // Set ChromaDB URL via environment variable
     const chromaUrl = `http://${config.chromaHost}:${config.chromaPort}`;
-    process.env.CHROMA_SERVER_HOST = config.chromaHost;
-    process.env.CHROMA_SERVER_PORT = config.chromaPort;
     console.error(`Connecting to ChromaDB at: ${chromaUrl}`);
     
-    this.client = new ChromaClient();
+    // Initialize ChromaClient with host and port
+    this.client = new ChromaClient({
+      host: config.chromaHost,
+      port: parseInt(config.chromaPort)
+    });
     
     this.openai = new OpenAI({
       apiKey: config.openaiApiKey
@@ -57,9 +59,17 @@ export class MemoryManager {
         }
       }
       
-      // Create or get collection
+      // Create or get collection with custom embedding function
       this.collection = await this.client.getOrCreateCollection({
         name: this.config.memoryCollectionName,
+        embeddingFunction: {
+          generate: async (texts: string[]) => {
+            const embeddings = await Promise.all(
+              texts.map(text => this.generateEmbedding(text))
+            );
+            return embeddings;
+          }
+        },
         metadata: {
           "hnsw:space": "cosine",
           "hnsw:construction_ef": 200,
