@@ -12,9 +12,18 @@ This feature allows you to automatically log your Claude Code conversations to y
 
 ## Usage
 
-### Starting a Session
+### Automatic Session Logging
 
-Use the `start_session_logging` tool to begin logging:
+The easiest way to use session logging is to enable it automatically:
+
+1. Set `AUTO_START_SESSION_LOGGING=true` in your environment or Docker configuration
+2. Optionally set `SESSION_LOGGING_PROJECT_NAME` to customize the project name
+3. Sessions will start automatically when Claude Code connects
+4. Sessions will be saved automatically on exit (controlled by `SESSION_LOGGING_SAVE_ON_EXIT`)
+
+### Manual Session Control
+
+You can also manually control session logging:
 
 ```json
 {
@@ -156,10 +165,13 @@ export class SessionLogger {
 
 The session logger uses these environment variables:
 - `OBSIDIAN_VAULT_PATH`: Path to your Obsidian vault (required)
+- `AUTO_START_SESSION_LOGGING`: Set to `true` to automatically start logging (default: `false`)
+- `SESSION_LOGGING_PROJECT_NAME`: Project name for auto-started sessions (default: `MCP ChromaDB Memory`)
+- `SESSION_LOGGING_SAVE_ON_EXIT`: Set to `false` to disable auto-save on exit (default: `true`)
 
 Default settings:
 - Session folder: `Claude Code Sessions`
-- Auto-save: Enabled
+- Auto-save on exit: Enabled
 - Maximum code snippet length: 500 characters
 - Maximum snippets per session: 3
 

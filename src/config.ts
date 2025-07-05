@@ -37,7 +37,11 @@ const ConfigSchema = z.object({
   maxMemoryResults: z.number().default(10),
   serverName: z.string().default('ai-memory-server'),
   serverVersion: z.string().default('1.0.0'),
-  isDocker: z.boolean().default(false)
+  isDocker: z.boolean().default(false),
+  // Session logging configuration
+  autoStartSessionLogging: z.boolean().default(false),
+  sessionLoggingProjectName: z.string().optional(),
+  sessionLoggingSaveOnExit: z.boolean().default(true)
 });
 
 // Detect if running in Docker
@@ -52,7 +56,11 @@ export const config = ConfigSchema.parse({
   maxMemoryResults: parseInt(process.env.MAX_MEMORY_RESULTS || '10'),
   serverName: process.env.MCP_SERVER_NAME,
   serverVersion: process.env.MCP_SERVER_VERSION,
-  isDocker
+  isDocker,
+  // Session logging configuration
+  autoStartSessionLogging: process.env.AUTO_START_SESSION_LOGGING === 'true',
+  sessionLoggingProjectName: process.env.SESSION_LOGGING_PROJECT_NAME,
+  sessionLoggingSaveOnExit: process.env.SESSION_LOGGING_SAVE_ON_EXIT !== 'false'
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

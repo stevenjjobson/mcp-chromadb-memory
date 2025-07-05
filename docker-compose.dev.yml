@@ -17,6 +17,9 @@ services:
       - MAX_MEMORY_RESULTS=${MAX_MEMORY_RESULTS:-10}
       - MCP_SERVER_NAME=${MCP_SERVER_NAME:-ai-memory-server}
       - MCP_SERVER_VERSION=${MCP_SERVER_VERSION:-1.0.0}
+      - AUTO_START_SESSION_LOGGING=${AUTO_START_SESSION_LOGGING:-false}
+      - SESSION_LOGGING_PROJECT_NAME=${SESSION_LOGGING_PROJECT_NAME:-MCP ChromaDB Memory}
+      - SESSION_LOGGING_SAVE_ON_EXIT=${SESSION_LOGGING_SAVE_ON_EXIT:-true}
     secrets:
       - openai_api_key
       - github_access_token

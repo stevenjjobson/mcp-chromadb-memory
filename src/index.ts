@@ -665,6 +665,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // Graceful shutdown handler
 process.on('SIGINT', async () => {
   console.error('Shutting down gracefully...');
+  
+  // Auto-save session if configured
+  if (sessionLogger && config.sessionLoggingSaveOnExit) {
+    try {
+      console.error('Auto-saving session log...');
+      const notePath = await sessionLogger.saveSession('Session ended (auto-saved on exit)');
+      console.error(`Session saved to: ${notePath}`);
+    } catch (error) {
+      console.error('Failed to auto-save session:', error);
+    }
+  }
+  
   if (memoryManager) {
     await memoryManager.close();
   }
@@ -693,6 +705,14 @@ async function main() {
       console.error('Obsidian manager initialized successfully');
     } else {
       console.error('Obsidian vault path not configured, skipping Obsidian integration');
+    }
+    
+    // Auto-start session logging if configured
+    if (config.autoStartSessionLogging && obsidianManager) {
+      const projectName = config.sessionLoggingProjectName || 'MCP ChromaDB Memory';
+      console.error(`Auto-starting session logging for project: ${projectName}`);
+      sessionLogger = new SessionLogger(obsidianManager, projectName);
+      console.error('Session logging started automatically');
     }
     
     // Start stdio transport

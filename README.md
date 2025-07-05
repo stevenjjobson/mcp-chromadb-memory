@@ -141,6 +141,8 @@ MCP_SERVER_VERSION=1.0.0
         "-e", "CHROMA_HOST=chromadb",
         "-e", "CHROMA_PORT=8000",
         "-e", "OBSIDIAN_VAULT_PATH=/vault",
+        "-e", "AUTO_START_SESSION_LOGGING=true",
+        "-e", "SESSION_LOGGING_PROJECT_NAME=MCP ChromaDB Memory",
         "mcp-chromadb-memory-mcp-memory"
       ]
     }
@@ -265,6 +267,8 @@ Manually logs specific events during the session.
   metadata?: object;    // Additional metadata
 }
 ```
+
+**Automatic Session Logging**: Set `AUTO_START_SESSION_LOGGING=true` in your environment to automatically start logging when Claude Code connects. The session will be auto-saved on exit if `SESSION_LOGGING_SAVE_ON_EXIT=true` (default).
 
 See [SESSION_LOGGING.md](SESSION_LOGGING.md) for detailed usage.
 
