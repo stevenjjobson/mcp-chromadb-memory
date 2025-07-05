@@ -21,7 +21,7 @@ services:
   mcp-memory:
     build: .
     container_name: mcp-memory-server
-    restart: unless-stopped
+    restart: "no"
     depends_on:
       - chromadb
     environment:

@@ -59,8 +59,10 @@ The MCP ChromaDB Memory Server enables AI assistants like Claude to maintain per
 
 4. **Verify installation**
    ```bash
-   docker-compose logs -f mcp-memory
+   docker-compose logs -f chromadb-memory
    ```
+
+> **Note**: The MCP server container will exit immediately when run standalone. This is normal behavior - MCP servers communicate via stdio and need a client to connect. Use the Claude Desktop configuration below to properly connect to the server.
 
 ### Local Development Setup
 
