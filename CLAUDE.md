@@ -72,3 +72,10 @@ When testing the memory server:
 - Docker mode is automatically detected via DOCKER_CONTAINER environment variable
 - Memory importance assessment uses heuristics but can be enhanced with LLM integration
 - The system retries ChromaDB connection 5 times with 2-second delays for Docker startup
+- MCP servers exit when no client is connected (this is normal behavior)
+- The server requires OpenAI API key for generating embeddings
+
+## Claude Desktop Setup
+
+The MCP server is configured in `%APPDATA%\Claude\claude_desktop_config.json` on Windows.
+See CLAUDE_DESKTOP_SETUP.md for detailed configuration instructions.

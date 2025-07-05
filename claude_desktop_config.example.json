@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "memory": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--network", "mcp-chromadb-memory_memory-network",
+        "-e", "OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE",
+        "-e", "DOCKER_CONTAINER=true",
+        "-e", "CHROMA_HOST=chromadb",
+        "-e", "CHROMA_PORT=8000",
+        "mcp-chromadb-memory-mcp-memory"
+      ]
+    }
+  }
+}

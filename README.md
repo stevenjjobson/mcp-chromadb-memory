@@ -108,7 +108,12 @@ MCP_SERVER_VERSION=1.0.0
 
 ### Claude Desktop Integration
 
-Add to your Claude Desktop configuration:
+1. **Locate the configuration file**:
+   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - Linux: `~/.config/Claude/claude_desktop_config.json`
+
+2. **Add the MCP server configuration**:
 
 ```json
 {
@@ -116,25 +121,34 @@ Add to your Claude Desktop configuration:
     "memory": {
       "command": "docker",
       "args": [
-        "run", "-i", "--rm",
+        "run",
+        "-i",
+        "--rm",
         "--network", "mcp-chromadb-memory_memory-network",
-        "-e", "OPENAI_API_KEY=your-api-key",
-        "mcp-chromadb-memory"
+        "-e", "OPENAI_API_KEY=your-api-key-here",
+        "-e", "DOCKER_CONTAINER=true",
+        "-e", "CHROMA_HOST=chromadb",
+        "-e", "CHROMA_PORT=8000",
+        "mcp-chromadb-memory-mcp-memory"
       ]
     }
   }
 }
 ```
 
-For local development:
+3. **Restart Claude Desktop** to load the new configuration
+
+For local development without Docker:
 ```json
 {
   "mcpServers": {
-    "memory-dev": {
+    "memory-local": {
       "command": "node",
-      "args": ["/path/to/mcp-chromadb-memory/dist/index.js"],
+      "args": ["C:\\path\\to\\mcp-chromadb-memory\\dist\\index.js"],
       "env": {
-        "OPENAI_API_KEY": "your-api-key"
+        "OPENAI_API_KEY": "your-api-key-here",
+        "CHROMA_HOST": "localhost",
+        "CHROMA_PORT": "8000"
       }
     }
   }
@@ -255,6 +269,39 @@ Then in the inspector:
 1. Call `health_check` to verify connection
 2. Use `store_memory` to save test memories
 3. Use `recall_memories` to test retrieval
+
+## 🔧 Troubleshooting
+
+### MCP Server Not Appearing in Claude Desktop
+
+1. **Verify configuration file location**:
+   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+   - Ensure JSON syntax is valid (no trailing commas)
+
+2. **Check Docker setup**:
+   ```bash
+   docker images | grep mcp-chromadb-memory
+   docker network ls | grep memory-network
+   ```
+
+3. **Ensure ChromaDB is running**:
+   ```bash
+   docker-compose ps
+   ```
+
+4. **Test manually**:
+   ```bash
+   docker run -it --rm \
+     --network mcp-chromadb-memory_memory-network \
+     -e OPENAI_API_KEY=your-key \
+     mcp-chromadb-memory-mcp-memory
+   ```
+
+### Common Issues
+
+- **"Container exits immediately"**: This is normal for MCP servers - they run on-demand
+- **"Cannot connect to ChromaDB"**: Ensure ChromaDB container is healthy
+- **"Missing OpenAI API key"**: Check your .env file or Docker environment variables
 
 ## 🤝 Contributing
 
