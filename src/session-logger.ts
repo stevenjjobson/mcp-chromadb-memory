@@ -286,14 +286,13 @@ tools: [${Array.from(this.sessionSummary.toolsUsed).join(', ')}]
     this.sessionSummary.endTime = new Date();
     
     const now = new Date();
-    const year = now.getFullYear();
+    const year = String(now.getFullYear()).slice(-2); // Get last 2 digits of year
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     
-    // Create folder structure
-    const folderPath = `${this.sessionFolder}/${year}/${month}`;
-    const fileName = `${year}-${month}-${day}-${this.sessionSummary.project.replace(/[^a-zA-Z0-9]/g, '-')}.md`;
-    const notePath = `${folderPath}/${fileName}`;
+    // Simple file naming: YY-MM-DD Project Name session.md
+    const fileName = `${year}-${month}-${day} ${this.sessionSummary.project} session.md`;
+    const notePath = `${this.sessionFolder}/${fileName}`;
     
     // Generate note content
     let noteContent = this.generateObsidianNote();
