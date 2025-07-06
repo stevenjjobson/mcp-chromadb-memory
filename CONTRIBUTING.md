@@ -2,6 +2,17 @@
 
 First off, thank you for considering contributing to this project! 🎉
 
+## 🚀 Platform v2.0 Development
+
+We're currently transforming this project into a comprehensive **Cognitive State Management Platform**. This is an exciting time to contribute! See our [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for the full vision.
+
+### Current Focus Areas
+- Hierarchical memory system (3-tier architecture)
+- Multi-project vault management
+- State capture and restoration
+- Pattern recognition and learning
+- Background optimization services
+
 ## How Can I Contribute?
 
 ### Reporting Bugs
@@ -35,11 +46,24 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 ## Development Process
 
+### Working on Platform v2.0
+
 1. **Setup your development environment**
    ```bash
    git clone https://github.com/yourusername/mcp-chromadb-memory.git
    cd mcp-chromadb-memory
+   
+   # Platform development happens on this branch
+   git checkout feature/platform-transformation
+   git pull origin feature/platform-transformation
+   
    npm install
+   ```
+
+2. **Create a feature branch**
+   ```bash
+   # Branch from platform transformation, not main
+   git checkout -b feature/your-feature-name
    ```
 
 2. **Make your changes**

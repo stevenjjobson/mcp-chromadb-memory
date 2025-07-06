@@ -432,8 +432,21 @@ Then in the inspector:
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+### 🚀 Platform v2.0 Development
+
+We're actively developing the next major version that transforms this into a Cognitive State Management Platform. To contribute:
+
+```bash
+# Platform development branch
+git checkout feature/platform-transformation
+git pull origin feature/platform-transformation
+```
+
+### Contributing Process
+
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+2. Switch to platform branch (`git checkout feature/platform-transformation`)
+3. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
