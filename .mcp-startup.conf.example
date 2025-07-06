@@ -1,0 +1,60 @@
+# MCP ChromaDB Memory Platform Startup Configuration
+# Copy this file to ~/.mcp-startup.conf and customize as needed
+
+# ChromaDB Configuration
+# The URL where ChromaDB is accessible
+CHROMADB_URL="http://localhost:8000"
+
+# Docker container name for ChromaDB
+# Update this if you're using a different container name
+CHROMADB_CONTAINER="chromadb-memory"
+
+# Path to the docker-compose directory
+# This is where your docker-compose.yml file is located
+DOCKER_COMPOSE_DIR="."
+
+# Startup Behavior
+# Maximum number of retries for service checks
+MAX_RETRIES=5
+
+# Delay between retries (in seconds)
+RETRY_DELAY=2
+
+# Claude Desktop Integration
+# Automatically launch Claude Desktop after successful startup
+AUTO_LAUNCH_CLAUDE=false
+
+# Path to Claude Desktop executable (Windows/WSL path)
+# Update this to match your Claude installation path
+CLAUDE_DESKTOP_PATH="/mnt/c/Users/$USER/AppData/Local/AnthropicClaude/Claude.exe"
+
+# Advanced Options
+# Enable verbose logging
+VERBOSE_LOGGING=false
+
+# Skip pre-initialization warm-up
+SKIP_WARMUP=false
+
+# Timeout for health checks (in seconds)
+HEALTH_CHECK_TIMEOUT=30
+
+# Memory cleanup threshold (days)
+# Memories older than this with low importance may be flagged for cleanup
+MEMORY_CLEANUP_DAYS=30
+
+# Custom scripts to run before startup
+# PRE_STARTUP_SCRIPT="/path/to/custom-script.sh"
+
+# Custom scripts to run after successful startup
+# POST_STARTUP_SCRIPT="/path/to/custom-script.sh"
+
+# Notification settings
+# Send desktop notification on startup complete (requires notify-send)
+DESKTOP_NOTIFICATION=false
+
+# Log file settings
+# Directory for startup logs (defaults to /tmp)
+LOG_DIR="/tmp"
+
+# Keep last N log files
+LOG_RETENTION=10

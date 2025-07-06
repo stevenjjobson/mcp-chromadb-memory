@@ -1440,9 +1440,12 @@ async function performStartupHealthCheck(): Promise<StartupSummary> {
         
         result.metadatas?.forEach(metadata => {
           if (metadata && metadata.timestamp) {
-            const age = now - new Date(metadata.timestamp).getTime();
-            if (age < dayInMs) {
-              recentMemories++;
+            const timestamp = metadata.timestamp;
+            if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+              const age = now - new Date(timestamp).getTime();
+              if (age < dayInMs) {
+                recentMemories++;
+              }
             }
           }
         });

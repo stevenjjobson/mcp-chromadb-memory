@@ -9,8 +9,8 @@
     - Docker Desktop for Windows
     - Claude Code for AI-assisted development
 - **Project Location**: `C:\Users\Steve\Dockers\mcp-chromadb-memory`
-- **Existing Setup**: Part of `aoe-mcp-personal` Docker environment
-- **Integration**: Will work alongside existing MCP servers (filesystem for Obsidian, fetch)
+- **Docker Environment**: Self-contained with its own docker-compose.yml
+- **Integration**: Works as standalone MCP server with ChromaDB
 
 ### Intended Use Case
 
@@ -25,16 +25,12 @@ This MCP server will provide AI-driven memory management for conversational cont
 
 ```
 C:\Users\Steve\Dockers\
-├── aoe-mcp-personal\           (Existing setup)
-│   ├── docker-compose.yml      (Will be updated)
-│   ├── servers\
-│   │   ├── filesystem\         (Existing - Obsidian access)
-│   │   └── fetch\             (Existing - Web fetching)
-│   └── databases\
-└── mcp-chromadb-memory\        (New - This guide)
-    ├── src\
-    ├── dist\
-    └── Dockerfile
+└── mcp-chromadb-memory\        (This project)
+    ├── src\                    (TypeScript source)
+    ├── dist\                   (Compiled JavaScript)
+    ├── docker-compose.yml      (ChromaDB service)
+    ├── Dockerfile              (MCP server image)
+    └── Project_Context\        (Documentation)
 ```
 
 ---

@@ -45,5 +45,5 @@ try {
     $response = Invoke-WebRequest -Uri "http://localhost:8000/api/v1/heartbeat" -UseBasicParsing -ErrorAction SilentlyContinue
     Write-Host "✓ ChromaDB is accessible" -ForegroundColor Green
 } catch {
-    Write-Host "! ChromaDB not running (run 'docker-compose up -d chromadb' in aoe-mcp-personal)" -ForegroundColor Yellow
+    Write-Host "! ChromaDB not running (run 'docker-compose up -d chromadb' in project directory)" -ForegroundColor Yellow
 }

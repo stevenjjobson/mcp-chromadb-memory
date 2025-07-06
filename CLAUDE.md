@@ -117,6 +117,17 @@ See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for 
 - **Autonomous Storage**: Memories are stored only if they exceed an importance threshold
 - **Multi-factor Retrieval**: Combines semantic similarity (40%), recency (30%), importance (20%), and frequency (10%)
 - **Context-aware Filtering**: Supports different contexts (general, user_preference, task_critical, obsidian_note)
+- **Vector Search**: Uses ChromaDB with OpenAI embeddings for semantic search
+- **Access Tracking**: Monitors memory access patterns for optimization
+- **Batch Operations**: Supports bulk memory operations for efficiency
+
+### Future Memory Enhancements (Hybrid Variable Tracking)
+
+The platform roadmap includes advanced memory features:
+- **Exact Search**: Precise string matching for variables and functions
+- **Token Optimization**: Context compression for efficient AI consumption
+- **Tiered Storage**: Hot/warm/cold memory tiers based on access patterns
+- **Incremental Updates**: Track only changed content for performance
 
 ## Development Commands
 
@@ -142,13 +153,13 @@ npm run inspect
 # Build Docker image
 npm run docker:build
 
-# Run in Docker (requires aoe-mcp-personal network)
+# Run in Docker
 npm run docker:run
 ```
 
 ### Starting ChromaDB
 
-From the `aoe-mcp-personal` directory:
+From the project directory:
 ```bash
 docker-compose up -d chromadb
 ```
@@ -177,3 +188,11 @@ When testing the memory server:
 
 The MCP server is configured in `%APPDATA%\Claude\claude_desktop_config.json` on Windows.
 See CLAUDE_DESKTOP_SETUP.md for detailed configuration instructions.
+
+## Additional Documentation
+
+For setup guides and detailed documentation, see:
+- **Setup Guides**: `Project_Context/vault/Knowledge/Setup/`
+- **Architecture Decisions**: `Project_Context/vault/Architecture/`
+- **Historical Documents**: `Project_Context/vault/Archive/`
+- **Session Logs**: `Project_Context/vault/Sessions/`

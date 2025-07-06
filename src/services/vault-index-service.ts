@@ -257,19 +257,22 @@ export class VaultIndexService {
       
       result.metadatas?.forEach(metadata => {
         if (metadata) {
-          const timestamp = new Date(metadata.timestamp || now).getTime();
-          const age = now - timestamp;
-          
-          if (age < dayInMs) {
-            last24Hours++;
-          }
-          if (age < weekInMs) {
-            lastWeek++;
+          const timestamp = metadata.timestamp;
+          if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+            const timestampMs = new Date(timestamp).getTime();
+            const age = now - timestampMs;
+            
+            if (age < dayInMs) {
+              last24Hours++;
+            }
+            if (age < weekInMs) {
+              lastWeek++;
+            }
           }
           
           // Count by context
           const context = metadata.context || 'general';
-          if (context in byContext) {
+          if (typeof context === 'string' && context in byContext) {
             byContext[context]++;
           } else {
             byContext.general++;
@@ -863,15 +866,18 @@ ${vaultStats.folderSizes
       
       result.metadatas?.forEach(metadata => {
         if (metadata) {
-          const timestamp = new Date(metadata.timestamp || now).getTime();
-          const age = now - timestamp;
-          
-          if (age < 2 * dayInMs) {
-            workingMemories++;
-          } else if (age < 2 * weekInMs) {
-            sessionMemories++;
-          } else {
-            longTermMemories++;
+          const timestamp = metadata.timestamp;
+          if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+            const timestampMs = new Date(timestamp).getTime();
+            const age = now - timestampMs;
+            
+            if (age < 2 * dayInMs) {
+              workingMemories++;
+            } else if (age < 2 * weekInMs) {
+              sessionMemories++;
+            } else {
+              longTermMemories++;
+            }
           }
         }
       });

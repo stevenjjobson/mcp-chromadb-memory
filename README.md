@@ -42,6 +42,8 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 - 📚 **Session Logging** - Automatically log Claude Code conversations to Obsidian with summaries and code highlights
 - 📋 **Template System** - Import and manage documentation templates from webhooks with Handlebars support
 - 🏗️ **Hierarchical Vault Structure** - Universal Developer Documentation System with automated folder generation and hooks
+- 🏥 **Health Monitoring** - Real-time system health checks with visual dashboard and startup verification
+- 📊 **Vault Index** - Comprehensive vault statistics and navigation system with automatic updates
 
 #### Platform Enhancements (Coming Soon)
 - 🏗️ **Hierarchical Memory System** - Three-tier architecture (Working, Session, Long-term) with automatic migration
@@ -110,6 +112,31 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
    npm run build
    npm run dev
    ```
+
+## 🚀 Quick Start with WSL
+
+### Using the Startup Script (Recommended)
+
+For WSL users, we provide a comprehensive startup script that ensures all services are running correctly:
+
+```bash
+# Make the script executable (first time only)
+chmod +x start-mcp-platform.sh
+
+# Run the startup script
+./start-mcp-platform.sh
+```
+
+The script will:
+- ✅ Verify Docker is running
+- ✅ Check ChromaDB status and start if needed
+- ✅ Validate environment configuration
+- ✅ Build TypeScript if needed
+- ✅ Run health checks
+- ✅ Display a visual dashboard
+- ✅ Optionally launch Claude Desktop when ready
+
+See [WSL Startup Guide](./Project_Context/vault/Knowledge/Setup/WSL_STARTUP_GUIDE.md) for detailed information.
 
 ## 🔧 Configuration
 
@@ -291,7 +318,7 @@ Manually logs specific events during the session.
 
 **Automatic Session Logging**: Set `AUTO_START_SESSION_LOGGING=true` in your environment to automatically start logging when Claude Code connects. The session will be auto-saved on exit if `SESSION_LOGGING_SAVE_ON_EXIT=true` (default).
 
-See [SESSION_LOGGING.md](SESSION_LOGGING.md) for detailed usage.
+See [SESSION_LOGGING.md](./Project_Context/vault/Knowledge/Setup/SESSION_LOGGING.md) for detailed usage.
 
 ### Template Management Tools
 
@@ -570,6 +597,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 🐛 [Report bugs](https://github.com/stevenjjobson/mcp-chromadb-memory/issues)
 - 💡 [Request features](https://github.com/stevenjjobson/mcp-chromadb-memory/issues)
 - 📖 [Documentation](https://github.com/stevenjjobson/mcp-chromadb-memory/wiki)
+
+## 📚 Additional Documentation
+
+The project documentation has been organized into the vault structure:
+
+- **Setup Guides**: See `Project_Context/vault/Knowledge/Setup/` for:
+  - Docker setup and troubleshooting
+  - WSL configuration guide
+  - Security setup instructions
+  - Health monitoring documentation
+  - Session logging guide
+  
+- **Architecture**: See `Project_Context/vault/Architecture/` for design decisions and patterns
+
+- **Historical Docs**: See `Project_Context/vault/Archive/` for previous development history
 
 ---
 

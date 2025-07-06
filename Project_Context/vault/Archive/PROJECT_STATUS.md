@@ -31,13 +31,13 @@
 
 6. **Docker Support**
    - Created Dockerfile
-   - Updated aoe-mcp-personal docker-compose.yml with ChromaDB service
+   - Added docker-compose.yml with ChromaDB service
 
 ## Next Steps 🚀
 
 ### To Start Development:
 
-1. **Start ChromaDB** (from aoe-mcp-personal directory):
+1. **Start ChromaDB** (from project directory):
    ```bash
    docker-compose up -d chromadb
    ```
