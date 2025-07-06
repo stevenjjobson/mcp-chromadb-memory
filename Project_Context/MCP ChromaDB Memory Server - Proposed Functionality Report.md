@@ -4,6 +4,8 @@
 
 The MCP ChromaDB Memory Server evolves from a simple memory storage system into a comprehensive **Cognitive State Management Platform** that intelligently captures, organizes, and retrieves development knowledge while maintaining full project context across sessions, devices, and team members.
 
+This transformation follows the [[Platform Approach - Cognitive State Management]], establishing a foundation for intelligent knowledge management that goes beyond traditional tools to become an integral part of the development workflow.
+
 ## Core Functionality Overview
 
 ### 1. **Hierarchical Memory System with Time-Delta Management**

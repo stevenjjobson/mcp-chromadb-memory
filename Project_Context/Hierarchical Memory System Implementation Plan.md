@@ -12,6 +12,8 @@ Create an intelligent memory system that:
 - Scales efficiently through hierarchical organization
 - Integrates seamlessly with existing development workflows
 
+This implementation follows the [[Platform Approach - Cognitive State Management]], transforming the MCP server from a tool into a comprehensive platform for cognitive state management.
+
 ## Implementation Phases
 
 ### Phase 1: Foundation (Week 1)
