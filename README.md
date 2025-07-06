@@ -40,6 +40,7 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 - 📊 **Smart Scoring** - Retrieval uses weighted scoring: Semantic (40%), Recency (30%), Importance (20%), Frequency (10%)
 - 📝 **Obsidian Integration** - Read, write, and search notes in your Obsidian vault with semantic search
 - 📚 **Session Logging** - Automatically log Claude Code conversations to Obsidian with summaries and code highlights
+- 📋 **Template System** - Import and manage documentation templates from webhooks with Handlebars support
 
 #### Platform Enhancements (Coming Soon)
 - 🏗️ **Hierarchical Memory System** - Three-tier architecture (Working, Session, Long-term) with automatic migration
@@ -291,6 +292,63 @@ Manually logs specific events during the session.
 
 See [SESSION_LOGGING.md](SESSION_LOGGING.md) for detailed usage.
 
+### Template Management Tools
+
+#### `import_template`
+Import a documentation template from an external webhook source.
+
+```typescript
+{
+  source: string;        // URL of the template to import
+  category?: string;     // Template category (session, decision, pattern, etc.)
+  variables?: object;    // Variables to apply immediately
+  saveAs?: string;       // Filename to save generated document
+}
+```
+
+#### `list_templates`
+List all available templates in the system.
+
+```typescript
+{
+  category?: string;     // Filter by category
+  source?: string;       // Filter by source URL
+}
+```
+
+#### `apply_template`
+Apply a template with variables to generate a document.
+
+```typescript
+{
+  templateId: string;    // ID of the template
+  variables: object;     // Variables to apply
+  outputPath: string;    // Where to save the document
+}
+```
+
+#### `configure_template_webhook`
+Configure a webhook source for importing templates.
+
+```typescript
+{
+  name: string;          // Name for this webhook
+  url: string;           // Webhook URL
+  authType?: string;     // Authentication type (none, bearer, api-key, oauth)
+  authCredentials?: string; // Auth credentials
+  syncInterval?: number; // Auto-sync interval in minutes
+}
+```
+
+#### `sync_templates`
+Synchronize templates from all configured webhook sources.
+
+```typescript
+// No parameters required
+```
+
+See [Template System Design](./Project_Context/Template%20System%20Design.md) for detailed architecture.
+
 ## 🏗️ Architecture
 
 ### Current Architecture
@@ -302,9 +360,14 @@ mcp-chromadb-memory/
 │   ├── config.ts             # Configuration management
 │   ├── memory-manager.ts     # ChromaDB operations & memory logic
 │   ├── obsidian-manager.ts   # Obsidian vault integration
-│   └── session-logger.ts     # Session capture and logging
+│   ├── session-logger.ts     # Session capture and logging
+│   ├── template-manager.ts   # Template system with webhook support
+│   ├── vault-manager.ts      # Vault management wrapper
+│   └── services/
+│       └── http-client.ts    # HTTP client for webhooks
 ├── Project_Context/
 │   ├── vault/               # Project-specific Obsidian vault
+│   │   └── Templates/       # Documentation templates
 │   └── *.md                 # Platform documentation
 ├── dist/                    # Compiled JavaScript
 ├── docker-compose.yml       # Container orchestration

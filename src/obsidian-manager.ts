@@ -51,6 +51,10 @@ export class ObsidianManager {
     });
   }
 
+  getVaultPath(): string {
+    return this.vaultPath;
+  }
+
   async initialize() {
     // Verify vault exists
     try {

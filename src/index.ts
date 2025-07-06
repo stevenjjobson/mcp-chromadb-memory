@@ -8,10 +8,13 @@ import {
   ReadResourceRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
+import * as path from 'path';
 import { config } from './config.js';
 import { MemoryManager } from './memory-manager.js';
 import { ObsidianManager } from './obsidian-manager.js';
 import { SessionLogger } from './session-logger.js';
+import { TemplateManager } from './template-manager.js';
+import { VaultManager } from './vault-manager.js';
 
 // Handle Windows-specific process signals
 if (process.platform === "win32") {
@@ -43,6 +46,8 @@ const server = new Server(
 let memoryManager: MemoryManager;
 let obsidianManager: ObsidianManager | null = null;
 let sessionLogger: SessionLogger | null = null;
+let vaultManager: VaultManager | null = null;
+let templateManager: TemplateManager | null = null;
 
 // Update the tools list in ListToolsRequestSchema handler
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -288,6 +293,111 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             }
           },
           required: ['type', 'content']
+        },
+      },
+      {
+        name: 'import_template',
+        description: 'Import a documentation template from external source',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            source: {
+              type: 'string',
+              description: 'URL of the template to import'
+            },
+            category: {
+              type: 'string',
+              description: 'Template category',
+              enum: ['session', 'decision', 'pattern', 'solution', 'snippet', 'custom']
+            },
+            variables: {
+              type: 'object',
+              description: 'Variables to apply to the template (optional)'
+            },
+            saveAs: {
+              type: 'string',
+              description: 'Filename to save the generated document (optional)'
+            }
+          },
+          required: ['source']
+        },
+      },
+      {
+        name: 'list_templates',
+        description: 'List all available templates',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            category: {
+              type: 'string',
+              description: 'Filter by category (optional)'
+            },
+            source: {
+              type: 'string',
+              description: 'Filter by source (optional)'
+            }
+          }
+        },
+      },
+      {
+        name: 'apply_template',
+        description: 'Apply a template with given variables',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            templateId: {
+              type: 'string',
+              description: 'ID of the template to apply'
+            },
+            variables: {
+              type: 'object',
+              description: 'Variables to apply to the template'
+            },
+            outputPath: {
+              type: 'string',
+              description: 'Path where to save the generated document'
+            }
+          },
+          required: ['templateId', 'variables', 'outputPath']
+        },
+      },
+      {
+        name: 'configure_template_webhook',
+        description: 'Configure a webhook source for templates',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string',
+              description: 'Name for this webhook source'
+            },
+            url: {
+              type: 'string',
+              description: 'Webhook URL'
+            },
+            authType: {
+              type: 'string',
+              description: 'Authentication type',
+              enum: ['none', 'bearer', 'api-key', 'oauth']
+            },
+            authCredentials: {
+              type: 'string',
+              description: 'Authentication credentials (optional)'
+            },
+            syncInterval: {
+              type: 'number',
+              description: 'Sync interval in minutes (optional)'
+            }
+          },
+          required: ['name', 'url']
+        },
+      },
+      {
+        name: 'sync_templates',
+        description: 'Synchronize templates from all configured sources',
+        inputSchema: {
+          type: 'object',
+          properties: {}
         },
       }
     ],
@@ -642,6 +752,181 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
       }
+
+      case 'import_template': {
+        if (!templateManager) {
+          throw new Error('Template manager not initialized');
+        }
+        
+        const template = await templateManager.importTemplate({
+          type: 'webhook',
+          url: args?.source as string
+        });
+        
+        // If variables provided, apply template immediately
+        if (args?.variables) {
+          const content = await templateManager.applyTemplate(
+            template.id, 
+            args.variables as Record<string, any>
+          );
+          
+          if (args?.saveAs && vaultManager) {
+            const filename = args.saveAs as string;
+            await vaultManager.saveDocument(filename, content);
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: true,
+                    template: {
+                      id: template.id,
+                      name: template.name,
+                      category: template.category
+                    },
+                    documentPath: filename,
+                    message: 'Template imported and applied successfully'
+                  }, null, 2)
+                }
+              ]
+            };
+          }
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                template: {
+                  id: template.id,
+                  name: template.name,
+                  description: template.description,
+                  version: template.version,
+                  category: template.category,
+                  variables: template.variables,
+                  tags: template.metadata.tags
+                },
+                message: 'Template imported successfully'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'list_templates': {
+        if (!templateManager) {
+          throw new Error('Template manager not initialized');
+        }
+        
+        const templates = await templateManager.listTemplates({
+          category: args?.category as string,
+          source: args?.source as string
+        });
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                count: templates.length,
+                templates: templates.map(t => ({
+                  id: t.id,
+                  name: t.name,
+                  description: t.description,
+                  version: t.version,
+                  category: t.category,
+                  source: t.source.url,
+                  variables: t.variables.length,
+                  tags: t.metadata.tags
+                }))
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'apply_template': {
+        if (!templateManager || !vaultManager) {
+          throw new Error('Template manager or vault manager not initialized');
+        }
+        
+        const content = await templateManager.applyTemplate(
+          args?.templateId as string,
+          args?.variables as Record<string, any>
+        );
+        
+        const outputPath = args?.outputPath as string;
+        await vaultManager.saveDocument(outputPath, content);
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                path: outputPath,
+                preview: content.substring(0, 200) + '...',
+                message: 'Template applied and saved successfully'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'configure_template_webhook': {
+        if (!templateManager) {
+          throw new Error('Template manager not initialized');
+        }
+        
+        const webhookId = await templateManager.registerWebhook({
+          name: args?.name as string,
+          url: args?.url as string,
+          authType: (args?.authType as any) || 'none',
+          authCredentials: args?.authCredentials as string,
+          syncInterval: args?.syncInterval as number
+        });
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                webhookId,
+                message: 'Webhook configured successfully'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'sync_templates': {
+        if (!templateManager) {
+          throw new Error('Template manager not initialized');
+        }
+        
+        const report = await templateManager.syncTemplates();
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                synced: report.synced,
+                updated: report.updated,
+                failed: report.failed,
+                sources: report.sources,
+                errors: report.errors,
+                message: `Synchronized ${report.synced + report.updated} templates`
+              }, null, 2)
+            }
+          ]
+        };
+      }
         
       default:
         throw new Error(`Unknown tool: ${name}`);
@@ -703,6 +988,24 @@ async function main() {
       obsidianManager = new ObsidianManager(vaultPath, memoryManager.getChromaClient());
       await obsidianManager.initialize();
       console.error('Obsidian manager initialized successfully');
+      
+      // Initialize vault manager
+      vaultManager = new VaultManager(obsidianManager);
+      await vaultManager.initialize();
+      console.error('Vault manager initialized successfully');
+      
+      // Initialize template manager
+      if (vaultManager) {
+        console.error('Initializing template manager...');
+        templateManager = new TemplateManager(vaultManager, {
+          cacheDir: path.join(vaultPath, '.template-cache'),
+          maxTemplateSize: parseInt(process.env.TEMPLATE_MAX_SIZE || '1048576'), // 1MB default
+          securityScan: process.env.TEMPLATE_SECURITY_SCAN !== 'false',
+          allowedSources: process.env.TEMPLATE_ALLOWED_SOURCES?.split(',').map(s => s.trim())
+        });
+        await templateManager.initialize();
+        console.error('Template manager initialized successfully');
+      }
     } else {
       console.error('Obsidian vault path not configured, skipping Obsidian integration');
     }
