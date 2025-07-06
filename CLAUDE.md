@@ -4,7 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an AI-driven MCP (Model Context Protocol) server that provides smart memory management using ChromaDB for semantic search and storage. The server enables AI assistants to autonomously store and retrieve memories based on importance assessment and multi-factor relevance scoring.
+This is a **Cognitive State Management Platform** built as an MCP (Model Context Protocol) server. It provides intelligent memory management using ChromaDB for semantic search and storage, with sophisticated features for preserving development context across sessions, projects, and teams.
+
+The platform is designed to:
+- Maintain persistent context across development sessions
+- Learn from development patterns and decisions
+- Provide multi-project support with instant context switching
+- Enable team knowledge sharing and collaboration
+
+See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20State%20Management.md) for the complete vision.
 
 ## Session Logging Instructions
 
@@ -31,13 +39,37 @@ If automatic logging is not enabled, you should:
 - Add manual summaries for complex sessions
 - Use descriptive project names for better organization
 
+## Platform Transformation Status
+
+**Current Version**: 1.0 (Basic memory server)
+**Target Version**: 2.0 (Cognitive State Management Platform)
+
+See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for the 20-day transformation plan.
+
+### Key Upcoming Features
+1. **Hierarchical Memory System**: Three-tier architecture for optimal performance
+2. **Vault Management**: Multi-project support with hot-swapping
+3. **State Capture**: Complete context preservation and restoration
+4. **Pattern Recognition**: Learning from development patterns
+5. **Background Services**: Automatic optimization and maintenance
+
 ## Architecture
 
-### Core Components
+### Current Components
 
 1. **MCP Server** (`src/index.ts`): Handles stdio communication and tool endpoints
 2. **Memory Manager** (`src/memory-manager.ts`): Manages ChromaDB operations and memory logic
 3. **Configuration** (`src/config.ts`): Environment-based configuration with Docker support
+4. **Obsidian Manager** (`src/obsidian-manager.ts`): Vault integration and note operations
+5. **Session Logger** (`src/session-logger.ts`): Development session capture
+
+### Planned Platform Components
+
+1. **Vault Manager** (`src/vault-manager.ts`): Multi-project vault management
+2. **State Manager** (`src/state-manager.ts`): Context capture and restoration
+3. **Hierarchical Memory Manager** (`src/memory-manager-v2.ts`): Three-tier memory system
+4. **Pattern Service** (`src/services/pattern-service.ts`): Pattern recognition and learning
+5. **Migration Service** (`src/services/migration-service.ts`): Automatic tier management
 
 ### Memory System Features
 

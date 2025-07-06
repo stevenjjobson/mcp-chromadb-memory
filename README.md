@@ -1,4 +1,4 @@
-# 🧠 MCP ChromaDB Memory Server
+# 🧠 MCP ChromaDB Memory Server - Cognitive State Management Platform
 
 <div align="center">
 
@@ -8,9 +8,9 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-An AI-driven MCP (Model Context Protocol) server that provides intelligent memory management using ChromaDB for semantic search and autonomous storage decisions.
+A comprehensive **Cognitive State Management Platform** that transforms how developers preserve context, manage knowledge, and maintain continuity across projects, sessions, and teams.
 
-[Features](#features) • [Installation](#installation) • [Usage](#usage) • [API](#api) • [Configuration](#configuration) • [Contributing](#contributing)
+[Features](#features) • [Platform Vision](#platform-vision) • [Installation](#installation) • [Usage](#usage) • [API](#api) • [Architecture](#architecture) • [Contributing](#contributing)
 
 </div>
 
@@ -18,17 +18,36 @@ An AI-driven MCP (Model Context Protocol) server that provides intelligent memor
 
 ## 🌟 Overview
 
-The MCP ChromaDB Memory Server enables AI assistants like Claude to maintain persistent, intelligent memory across conversations. It autonomously decides what information is worth remembering based on importance assessment and provides context-aware retrieval with multi-factor relevance scoring.
+The MCP ChromaDB Memory Server has evolved from a simple memory storage tool into a comprehensive **Cognitive State Management Platform**. It intelligently captures, organizes, and retrieves development knowledge while maintaining full project context across sessions, devices, and team members. The platform enables AI assistants like Claude to maintain persistent, intelligent memory with sophisticated hierarchical organization and automatic learning from development patterns.
 
-### Key Capabilities
+## 🚀 Platform Vision
 
+This project implements a complete cognitive platform that:
+
+- **Preserves Context**: Never lose your mental state when switching tasks or devices
+- **Learns from Usage**: Automatically extracts patterns and insights from development sessions
+- **Scales Intelligently**: Hierarchical memory system optimized for performance
+- **Integrates Deeply**: Works seamlessly with your existing development workflow
+
+See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20State%20Management.md) for detailed vision.
+
+### Platform Capabilities
+
+#### Current Features
 - 🤖 **Autonomous Storage** - AI-assessed importance determines what gets stored
 - 🔍 **Intelligent Retrieval** - Multi-factor scoring combines semantic similarity, recency, importance, and access frequency
 - 🎯 **Context-Aware** - Supports different memory contexts (general, user preferences, critical tasks, notes)
 - 📊 **Smart Scoring** - Retrieval uses weighted scoring: Semantic (40%), Recency (30%), Importance (20%), Frequency (10%)
 - 📝 **Obsidian Integration** - Read, write, and search notes in your Obsidian vault with semantic search
 - 📚 **Session Logging** - Automatically log Claude Code conversations to Obsidian with summaries and code highlights
-- 🔄 **Memory Consolidation** - Prevents redundancy by merging similar memories (coming soon)
+
+#### Platform Enhancements (Coming Soon)
+- 🏗️ **Hierarchical Memory System** - Three-tier architecture (Working, Session, Long-term) with automatic migration
+- 🔄 **Vault Management** - Multi-project support with instant context switching
+- 💾 **State Capture** - Save and restore complete working context across devices
+- 🧬 **Pattern Recognition** - Learn from development patterns and suggest solutions
+- 🔄 **Memory Consolidation** - Intelligent deduplication and memory merging
+- 🔀 **Git Integration** - Link memories to commits, branches, and pull requests
 
 ## 📋 Requirements
 
@@ -274,17 +293,74 @@ See [SESSION_LOGGING.md](SESSION_LOGGING.md) for detailed usage.
 
 ## 🏗️ Architecture
 
+### Current Architecture
+
 ```
 mcp-chromadb-memory/
 ├── src/
-│   ├── index.ts         # MCP server entry point
-│   ├── config.ts        # Configuration management
-│   └── memory-manager.ts # ChromaDB operations & memory logic
-├── dist/                # Compiled JavaScript
-├── docker-compose.yml   # Container orchestration
-├── Dockerfile          # Container definition
-└── tests/              # Test suites
+│   ├── index.ts              # MCP server entry point
+│   ├── config.ts             # Configuration management
+│   ├── memory-manager.ts     # ChromaDB operations & memory logic
+│   ├── obsidian-manager.ts   # Obsidian vault integration
+│   └── session-logger.ts     # Session capture and logging
+├── Project_Context/
+│   ├── vault/               # Project-specific Obsidian vault
+│   └── *.md                 # Platform documentation
+├── dist/                    # Compiled JavaScript
+├── docker-compose.yml       # Container orchestration
+└── Dockerfile              # Container definition
 ```
+
+### Platform Architecture (v2.0)
+
+```mermaid
+graph TD
+    subgraph "Application Layer"
+        A1[Claude Desktop]
+        A2[CLI Tools]
+        A3[Web Dashboard]
+    end
+    
+    subgraph "Integration Layer"
+        B1[MCP Protocol]
+        B2[REST API]
+        B3[WebSocket Events]
+    end
+    
+    subgraph "Intelligence Layer"
+        C1[Pattern Recognition]
+        C2[Session Processor]
+        C3[State Manager]
+        C4[Vault Manager]
+    end
+    
+    subgraph "Memory Layer"
+        D1[Working Memory]
+        D2[Session Memory]
+        D3[Long-term Memory]
+    end
+    
+    subgraph "Storage Layer"
+        E1[ChromaDB]
+        E2[Obsidian Vault]
+        E3[Git Repository]
+    end
+    
+    A1 --> B1
+    A2 --> B2
+    A3 --> B3
+    B1 --> C1
+    B2 --> C2
+    B3 --> C3
+    C1 --> D1
+    C2 --> D2
+    C3 --> D3
+    D1 --> E1
+    D2 --> E2
+    D3 --> E3
+```
+
+See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for transformation details.
 
 ### Memory Scoring Algorithm
 
