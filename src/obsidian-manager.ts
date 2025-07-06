@@ -55,6 +55,11 @@ export class ObsidianManager {
     return this.vaultPath;
   }
 
+  updateVaultPath(newPath: string): void {
+    this.vaultPath = newPath;
+    console.error(`ObsidianManager vault path updated to: ${newPath}`);
+  }
+
   async initialize() {
     // Verify vault exists
     try {
