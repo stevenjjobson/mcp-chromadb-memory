@@ -42,6 +42,10 @@ export class VaultManager {
     return this.activeVault;
   }
 
+  getVaultPath(): string {
+    return this.activeVault.path;
+  }
+
   async saveDocument(filename: string, content: string): Promise<void> {
     // For now, delegate to ObsidianManager
     const notePath = filename.endsWith('.md') ? filename : `${filename}.md`;

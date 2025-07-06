@@ -16,6 +16,16 @@ import { SessionLogger } from './session-logger.js';
 import { TemplateManager } from './template-manager.js';
 import { VaultManager } from './vault-manager.js';
 import { VaultStructureManager } from './vault-structure-manager.js';
+import { VaultIndexService } from './services/vault-index-service.js';
+import { MemoryHealthMonitor } from './services/memory-health-monitor.js';
+import { VaultFileWatcher } from './services/vault-file-watcher.js';
+import { 
+  StartupSummary, 
+  SystemHealthSummary, 
+  StartupContext,
+  TaskSummary,
+  HealthStatus 
+} from './types/vault-index.types.js';
 
 // Handle Windows-specific process signals
 if (process.platform === "win32") {
@@ -50,6 +60,9 @@ let sessionLogger: SessionLogger | null = null;
 let vaultManager: VaultManager | null = null;
 let templateManager: TemplateManager | null = null;
 let structureManager: VaultStructureManager | null = null;
+let vaultIndexService: VaultIndexService | null = null;
+let memoryHealthMonitor: MemoryHealthMonitor | null = null;
+let vaultFileWatcher: VaultFileWatcher | null = null;
 
 // Update the tools list in ListToolsRequestSchema handler
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -480,6 +493,51 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             }
           },
           required: ['folderPath']
+        },
+      },
+      {
+        name: 'get_vault_index',
+        description: 'Retrieve the current vault index with system health and statistics',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            format: {
+              type: 'string',
+              description: 'Output format (json or markdown)',
+              enum: ['json', 'markdown'],
+              default: 'json'
+            }
+          }
+        },
+      },
+      {
+        name: 'check_memory_health',
+        description: 'Run memory system health diagnostics',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            includeRecommendations: {
+              type: 'boolean',
+              description: 'Include optimization recommendations',
+              default: true
+            }
+          }
+        },
+      },
+      {
+        name: 'regenerate_index',
+        description: 'Force regeneration of the vault index',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        },
+      },
+      {
+        name: 'get_startup_summary',
+        description: 'Get the startup summary information',
+        inputSchema: {
+          type: 'object',
+          properties: {}
         },
       }
     ],
@@ -1144,6 +1202,131 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
       }
+      
+      case 'get_vault_index': {
+        if (!vaultIndexService) {
+          throw new Error('Vault index service not initialized');
+        }
+        
+        const index = await vaultIndexService.generateIndex();
+        const format = args?.format as string || 'json';
+        
+        if (format === 'markdown') {
+          // Return the path to the markdown file
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  indexPath: 'Project_Context/vault/VAULT_INDEX.md',
+                  message: 'Vault index available at the specified path',
+                  summary: {
+                    health: index.health.overall,
+                    totalMemories: index.activeContext.recentMemories.total,
+                    activeTasks: index.activeContext.activeTasks.length
+                  }
+                }, null, 2)
+              }
+            ]
+          };
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(index, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'check_memory_health': {
+        if (!memoryHealthMonitor) {
+          throw new Error('Memory health monitor not initialized');
+        }
+        
+        const health = await memoryHealthMonitor.checkMemoryHealth();
+        const includeRecommendations = args?.includeRecommendations !== false;
+        
+        const response: any = {
+          success: true,
+          health: {
+            fragmentation: {
+              status: health.fragmentation.status,
+              percentage: health.fragmentation.percentage,
+              details: health.fragmentation.details
+            },
+            duplicates: {
+              count: health.duplicates.count,
+              groups: health.duplicates.groups.length
+            },
+            orphaned: {
+              count: health.orphaned.count,
+              examples: health.orphaned.memories.slice(0, 3)
+            },
+            performance: health.performance
+          }
+        };
+        
+        if (includeRecommendations) {
+          response.recommendations = health.recommendations;
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(response, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'regenerate_index': {
+        if (!vaultIndexService) {
+          throw new Error('Vault index service not initialized');
+        }
+        
+        await vaultIndexService.generateAndSaveIndex();
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: 'Vault index regenerated successfully',
+                indexPath: 'Project_Context/vault/VAULT_INDEX.md',
+                timestamp: new Date().toISOString()
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'get_startup_summary': {
+        const summary = await performStartupHealthCheck();
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                summary: {
+                  version: summary.version,
+                  timestamp: summary.timestamp,
+                  health: summary.health,
+                  context: summary.context,
+                  recommendations: summary.recommendations
+                }
+              }, null, 2)
+            }
+          ]
+        };
+      }
         
       default:
         throw new Error(`Unknown tool: ${name}`);
@@ -1179,11 +1362,209 @@ process.on('SIGINT', async () => {
     }
   }
   
+  if (vaultFileWatcher) {
+    await vaultFileWatcher.stop();
+  }
+  
+  if (vaultIndexService) {
+    await vaultIndexService.stop();
+  }
+  
   if (memoryManager) {
     await memoryManager.close();
   }
   process.exit(0);
 });
+
+// Startup health check functions
+async function performStartupHealthCheck(): Promise<StartupSummary> {
+  const summary: StartupSummary = {
+    timestamp: new Date(),
+    version: config.serverVersion,
+    health: {
+      overall: 'healthy' as HealthStatus,
+      components: {},
+      warnings: [],
+      errors: []
+    },
+    context: {
+      totalMemories: 0,
+      recentMemories: 0,
+      workingMemoryLoad: 0,
+      activeTasks: [],
+      projectSummary: 'MCP ChromaDB Memory Platform - Cognitive State Management'
+    },
+    recommendations: []
+  };
+  
+  try {
+    // Check ChromaDB connection
+    const chromaHealth = await memoryManager.isConnected();
+    summary.health.components['ChromaDB'] = chromaHealth ? 'Connected' : 'Failed';
+    if (!chromaHealth) {
+      summary.health.errors.push('ChromaDB connection failed');
+      summary.health.overall = 'error' as HealthStatus;
+    }
+    
+    // Check Obsidian vault
+    if (obsidianManager) {
+      summary.health.components['Obsidian Vault'] = 'Connected';
+    } else {
+      summary.health.components['Obsidian Vault'] = 'Not configured';
+      summary.health.warnings.push('Obsidian vault not configured');
+    }
+    
+    // Check session logger
+    if (sessionLogger) {
+      const sessionSummary = sessionLogger.getSessionSummary();
+      summary.health.components['Session Logger'] = `Active (${sessionSummary.project})`;
+    } else {
+      summary.health.components['Session Logger'] = 'Not started';
+    }
+    
+    // Get memory statistics
+    if (chromaHealth && memoryManager) {
+      try {
+        const chromaClient = memoryManager.getChromaClient();
+        const collection = await chromaClient.getCollection({
+          name: process.env.MEMORY_COLLECTION_NAME || 'ai_memories'
+        });
+        
+        const result = await collection.get();
+        const totalMemories = result.ids?.length || 0;
+        
+        // Count recent memories (last 24 hours)
+        const now = Date.now();
+        const dayInMs = 24 * 60 * 60 * 1000;
+        let recentMemories = 0;
+        
+        result.metadatas?.forEach(metadata => {
+          if (metadata && metadata.timestamp) {
+            const age = now - new Date(metadata.timestamp).getTime();
+            if (age < dayInMs) {
+              recentMemories++;
+            }
+          }
+        });
+        
+        summary.context.totalMemories = totalMemories;
+        summary.context.recentMemories = recentMemories;
+        // Calculate working memory load as percentage of recent vs total
+        summary.context.workingMemoryLoad = totalMemories > 0 
+          ? Math.round((recentMemories / totalMemories) * 100)
+          : 0;
+      } catch (error) {
+        console.error('Error getting memory statistics:', error);
+        // Keep defaults if error
+      }
+    }
+    
+    // Get active tasks
+    if (vaultManager) {
+      try {
+        // Try to read from Implementation Roadmap
+        const roadmapPath = path.join(vaultManager.getVaultPath(), 'Project_Context', 'Implementation Roadmap.md');
+        const { readFile } = await import('fs/promises');
+        
+        try {
+          const content = await readFile(roadmapPath, 'utf-8');
+          const tasks: TaskSummary[] = [];
+          const lines = content.split('\n');
+          
+          lines.forEach((line, index) => {
+            const incompleteMatch = line.match(/^[\s-]*\[ \]\s+(.+)/);
+            if (incompleteMatch && tasks.length < 3) {
+              tasks.push({
+                id: (tasks.length + 1).toString(),
+                title: incompleteMatch[1].trim().substring(0, 80),
+                status: 'pending',
+                priority: 'medium'
+              });
+            }
+          });
+          
+          if (tasks.length > 0) {
+            summary.context.activeTasks = tasks;
+          }
+        } catch (error) {
+          // Roadmap not found, keep defaults
+        }
+      } catch (error) {
+        console.error('Error reading tasks:', error);
+      }
+    }
+    
+    // Generate recommendations
+    if (summary.context.workingMemoryLoad > 80) {
+      summary.recommendations.push('Consider consolidating working memory');
+    }
+    
+    if (summary.health.warnings.length === 0 && summary.health.errors.length === 0) {
+      summary.health.overall = 'healthy' as HealthStatus;
+    } else if (summary.health.errors.length > 0) {
+      summary.health.overall = 'error' as HealthStatus;
+    } else {
+      summary.health.overall = 'warning' as HealthStatus;
+    }
+    
+  } catch (error) {
+    summary.health.overall = 'error' as HealthStatus;
+    summary.health.errors.push(`Health check error: ${error}`);
+  }
+  
+  return summary;
+}
+
+async function displayStartupSummary(): Promise<void> {
+  const summary = await performStartupHealthCheck();
+  
+  const healthIcon = summary.health.overall === 'healthy' ? '✅' : 
+                     summary.health.overall === 'warning' ? '⚠️' : '❌';
+  
+  // Format the startup message
+  let message = `\n🚀 **MCP ChromaDB Memory Platform Started**\n\n`;
+  message += `📊 **System Health**: ${healthIcon} ${summary.health.overall}\n`;
+  
+  // Component status
+  Object.entries(summary.health.components).forEach(([component, status]) => {
+    message += `- ${component}: ${status}\n`;
+  });
+  
+  message += `\n🧠 **Memory Status**\n`;
+  message += `- Total Memories: ${summary.context.totalMemories}\n`;
+  message += `- Recent (24h): ${summary.context.recentMemories}\n`;
+  message += `- Working Memory Load: ${summary.context.workingMemoryLoad}%\n`;
+  
+  if (vaultManager) {
+    message += `\n📁 **Vault Index**: Check Project_Context/vault/VAULT_INDEX.md for details\n`;
+  }
+  
+  if (summary.context.activeTasks.length > 0) {
+    message += `\n✅ **Active Tasks**\n`;
+    summary.context.activeTasks.forEach(task => {
+      const icon = task.status === 'completed' ? '✅' : 
+                   task.status === 'in_progress' ? '🔄' : '⏸️';
+      message += `${icon} ${task.title}\n`;
+    });
+  }
+  
+  if (summary.recommendations.length > 0) {
+    message += `\n💡 **Recommendations**\n`;
+    summary.recommendations.forEach(rec => {
+      message += `- ${rec}\n`;
+    });
+  }
+  
+  message += `\nReady to continue your work!\n`;
+  
+  // Log the startup summary
+  console.error(message);
+  
+  // If session logger is active, log the startup event
+  if (sessionLogger) {
+    sessionLogger.logAssistantMessage(`System started successfully. ${summary.health.components['ChromaDB']} | Memory: ${summary.context.totalMemories} total`);
+  }
+}
 
 // Start server
 async function main() {
@@ -1240,6 +1621,30 @@ async function main() {
       sessionLogger = new SessionLogger(obsidianManager, projectName);
       console.error('Session logging started automatically');
     }
+    
+    // Initialize vault index service and memory health monitor
+    if (vaultManager && memoryManager) {
+      console.error('Initializing vault index service...');
+      vaultIndexService = new VaultIndexService(vaultManager, memoryManager, sessionLogger || undefined);
+      await vaultIndexService.initialize();
+      console.error('Vault index service initialized successfully');
+      
+      console.error('Initializing memory health monitor...');
+      memoryHealthMonitor = new MemoryHealthMonitor(memoryManager, memoryManager.getChromaClient());
+      console.error('Memory health monitor initialized successfully');
+      
+      // Initialize file watcher for real-time updates
+      const watcherVaultPath = obsidianManager?.getVaultPath();
+      if (watcherVaultPath && vaultIndexService) {
+        console.error('Initializing vault file watcher...');
+        vaultFileWatcher = new VaultFileWatcher(watcherVaultPath, vaultIndexService);
+        await vaultFileWatcher.start();
+        console.error('Vault file watcher started successfully');
+      }
+    }
+    
+    // Display startup summary
+    await displayStartupSummary();
     
     // Start stdio transport
     const transport = new StdioServerTransport();

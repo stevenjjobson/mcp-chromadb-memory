@@ -14,6 +14,45 @@ The platform is designed to:
 
 See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20State%20Management.md) for the complete vision.
 
+## Startup Procedure
+
+When you connect to this MCP server, the following happens automatically:
+
+### 1. System Health Check
+The platform performs a comprehensive health check on startup:
+- ChromaDB connection status
+- Memory collections availability
+- Obsidian vault accessibility
+- Session logger initialization
+- Template and vault structure managers
+
+### 2. Startup Summary Display
+You'll see a startup summary in the console showing:
+- 📊 **System Health**: Overall status and component health
+- 🧠 **Memory Status**: Total memories, recent activity, working memory load
+- 📁 **Vault Index**: Link to the comprehensive vault index
+- ✅ **Active Tasks**: Current work items in progress
+- 💡 **Recommendations**: System optimization suggestions
+
+### 3. Vault Index Generation
+The system automatically generates/updates `Project_Context/vault/VAULT_INDEX.md` which contains:
+- Real-time system health dashboard
+- Memory system statistics
+- Active context and recent sessions
+- Vault organization metrics
+- Quick navigation links
+
+### 4. Context Loading
+- Previous session context is available through memory recall
+- Active tasks are tracked in the vault
+- Session logging starts automatically (if enabled)
+
+### Quick Start
+1. **Check the startup summary** in your console for system status
+2. **View the Vault Index** at `Project_Context/vault/VAULT_INDEX.md` for detailed information
+3. **Review active tasks** to understand current work
+4. **Use memory recall** to retrieve previous context
+
 ## Session Logging Instructions
 
 **IMPORTANT**: This project has session logging capabilities that allow tracking development conversations in Obsidian.
@@ -62,6 +101,8 @@ See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for 
 3. **Configuration** (`src/config.ts`): Environment-based configuration with Docker support
 4. **Obsidian Manager** (`src/obsidian-manager.ts`): Vault integration and note operations
 5. **Session Logger** (`src/session-logger.ts`): Development session capture
+6. **Vault Index Service** (`src/services/vault-index-service.ts`): Real-time vault statistics and health monitoring
+7. **Memory Health Monitor** (`src/services/memory-health-monitor.ts`): Memory system diagnostics and optimization
 
 ### Planned Platform Components
 
