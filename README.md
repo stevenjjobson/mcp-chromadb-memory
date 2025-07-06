@@ -38,6 +38,10 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 - 🔍 **Intelligent Retrieval** - Multi-factor scoring combines semantic similarity, recency, importance, and access frequency
 - 🎯 **Context-Aware** - Supports different memory contexts (general, user preferences, critical tasks, notes)
 - 📊 **Smart Scoring** - Retrieval uses weighted scoring: Semantic (40%), Recency (30%), Importance (20%), Frequency (10%)
+- 🔎 **Exact Search** - Fast string matching with keyword indexing for precise lookups
+- 🔀 **Hybrid Search** - Combines exact and semantic search with configurable weights
+- 🗜️ **Token Optimization** - Smart compression (50-90% reduction) while preserving important content
+- 📈 **Access Pattern Analysis** - Track hot/warm/cold memories with tier recommendations
 - 📝 **Obsidian Integration** - Read, write, and search notes in your Obsidian vault with semantic search
 - 📚 **Session Logging** - Automatically log Claude Code conversations to Obsidian with summaries and code highlights
 - 📋 **Template System** - Import and manage documentation templates from webhooks with Handlebars support

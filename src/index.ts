@@ -10,7 +10,19 @@ import {
 import { z } from 'zod';
 import * as path from 'path';
 import { config } from './config.js';
-import { MemoryManager } from './memory-manager.js';
+import { EnhancedMemoryManager } from './memory-manager-enhanced.js';
+import { MemoryPatternService } from './services/memory-pattern-service.js';
+import { 
+  enhancedMemoryTools,
+  handleSearchExact,
+  handleSearchHybrid,
+  handleGetCompressedContext,
+  handleGetOptimizedMemory,
+  searchExactSchema,
+  searchHybridSchema,
+  getCompressedContextSchema,
+  getOptimizedMemorySchema
+} from './tools/memory-tools-enhanced.js';
 import { ObsidianManager } from './obsidian-manager.js';
 import { SessionLogger } from './session-logger.js';
 import { TemplateManager } from './template-manager.js';
@@ -54,7 +66,8 @@ const server = new Server(
 );
 
 // Initialize memory manager (to be implemented)
-let memoryManager: MemoryManager;
+let memoryManager: EnhancedMemoryManager;
+let memoryPatternService: MemoryPatternService | null = null;
 let obsidianManager: ObsidianManager | null = null;
 let sessionLogger: SessionLogger | null = null;
 let vaultManager: VaultManager | null = null;
@@ -539,6 +552,114 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: 'object',
           properties: {}
         },
+      },
+      // Enhanced memory tools
+      {
+        name: 'search_exact',
+        description: 'Search for memories using exact string matching',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Exact search query'
+            },
+            field: {
+              type: 'string',
+              description: 'Optional metadata field to search in'
+            },
+            limit: {
+              type: 'number',
+              description: 'Maximum number of results',
+              default: 10
+            }
+          },
+          required: ['query']
+        },
+      },
+      {
+        name: 'search_hybrid',
+        description: 'Search using both exact and semantic matching with configurable weights',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Search query'
+            },
+            context: {
+              type: 'string',
+              description: 'Optional context filter'
+            },
+            exactWeight: {
+              type: 'number',
+              description: 'Weight for exact match (0-1)',
+              default: 0.4
+            },
+            limit: {
+              type: 'number',
+              description: 'Maximum number of results',
+              default: 10
+            }
+          },
+          required: ['query']
+        },
+      },
+      {
+        name: 'get_compressed_context',
+        description: 'Get compressed context from relevant memories optimized for AI token limits',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Query to find relevant memories'
+            },
+            maxTokens: {
+              type: 'number',
+              description: 'Maximum tokens for compressed context',
+              default: 500
+            },
+            preserveStructure: {
+              type: 'boolean',
+              description: 'Preserve document structure',
+              default: true
+            },
+            smartFiltering: {
+              type: 'boolean',
+              description: 'Use smart filtering',
+              default: true
+            }
+          },
+          required: ['query']
+        },
+      },
+      {
+        name: 'get_optimized_memory',
+        description: 'Get a specific memory optimized for AI consumption with token limit',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            memoryId: {
+              type: 'string',
+              description: 'Memory ID to optimize'
+            },
+            maxTokens: {
+              type: 'number',
+              description: 'Maximum tokens for optimized output',
+              default: 300
+            }
+          },
+          required: ['memoryId']
+        },
+      },
+      {
+        name: 'analyze_access_patterns',
+        description: 'Analyze memory access patterns and get tier recommendations',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        },
       }
     ],
   };
@@ -586,11 +707,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
         
       case 'recall_memories': {
-        const memories = await memoryManager.recallMemories(
+        const memories = await memoryManager.searchSemantic(
           args?.query as string,
           args?.context as string,
           args?.limit as number
         );
+        
+        // Track access patterns
+        if (memoryPatternService) {
+          for (const result of memories) {
+            await memoryPatternService.trackAccess(result.memory.id);
+          }
+        }
         
         const formattedMemories = memories.map(m => ({
           content: m.memory.content,
@@ -1327,6 +1455,83 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
       }
+
+      // Enhanced memory tool handlers
+      case 'search_exact': {
+        const parsedArgs = searchExactSchema.parse(args);
+        const result = await handleSearchExact(parsedArgs, memoryManager);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'search_hybrid': {
+        const parsedArgs = searchHybridSchema.parse(args);
+        const result = await handleSearchHybrid(parsedArgs, memoryManager);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'get_compressed_context': {
+        const parsedArgs = getCompressedContextSchema.parse(args);
+        const result = await handleGetCompressedContext(parsedArgs, memoryManager);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'get_optimized_memory': {
+        const parsedArgs = getOptimizedMemorySchema.parse(args);
+        const result = await handleGetOptimizedMemory(parsedArgs, memoryManager);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'analyze_access_patterns': {
+        if (!memoryPatternService) {
+          throw new Error('Memory pattern service not initialized');
+        }
+        const analysis = await memoryPatternService.analyzePatterns();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                analysis: {
+                  hotMemories: analysis.hotMemories.length,
+                  warmMemories: analysis.warmMemories.length,
+                  coldMemories: analysis.coldMemories.length,
+                  stats: analysis.stats,
+                  recommendations: analysis.recommendations
+                }
+              }, null, 2)
+            }
+          ]
+        };
+      }
         
       default:
         throw new Error(`Unknown tool: ${name}`);
@@ -1576,11 +1781,15 @@ async function main() {
     console.error(`Platform: ${process.platform}`);
     console.error(`Docker mode: ${config.isDocker}`);
     
-    // Initialize memory manager
-    memoryManager = new MemoryManager(config);
+    // Initialize enhanced memory manager
+    memoryManager = new EnhancedMemoryManager(config);
     await memoryManager.initialize();
     
-    console.error('Memory manager initialized successfully');
+    console.error('Enhanced memory manager initialized successfully');
+    
+    // Initialize memory pattern service
+    memoryPatternService = new MemoryPatternService(memoryManager);
+    console.error('Memory pattern service initialized');
     
     // Initialize Obsidian manager if vault path is configured
     const vaultPath = process.env.OBSIDIAN_VAULT_PATH;
@@ -1628,12 +1837,12 @@ async function main() {
     // Initialize vault index service and memory health monitor
     if (vaultManager && memoryManager) {
       console.error('Initializing vault index service...');
-      vaultIndexService = new VaultIndexService(vaultManager, memoryManager, sessionLogger || undefined);
+      vaultIndexService = new VaultIndexService(vaultManager, memoryManager as any, sessionLogger || undefined);
       await vaultIndexService.initialize();
       console.error('Vault index service initialized successfully');
       
       console.error('Initializing memory health monitor...');
-      memoryHealthMonitor = new MemoryHealthMonitor(memoryManager, memoryManager.getChromaClient());
+      memoryHealthMonitor = new MemoryHealthMonitor(memoryManager as any, memoryManager.getChromaClient());
       console.error('Memory health monitor initialized successfully');
       
       // Initialize file watcher for real-time updates

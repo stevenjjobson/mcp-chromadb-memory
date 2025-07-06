@@ -776,4 +776,33 @@ export class EnhancedMemoryManager {
       throw error;
     }
   }
+  
+  // Backward compatibility - alias for searchSemantic
+  async recallMemories(
+    query: string,
+    context?: string,
+    limit: number = 5
+  ): Promise<MemoryScore[]> {
+    return this.searchSemantic(query, context, limit);
+  }
+  
+  // Get ChromaDB client (for health monitoring)
+  getChromaClient(): ChromaClient {
+    return this.client;
+  }
+  
+  // Close connections
+  async close(): Promise<void> {
+    // ChromaDB client doesn't have a close method, but we can clear indexes
+    this.exactIndex.contentIndex.clear();
+    this.exactIndex.metadataIndex.clear();
+    this.exactIndex.memoryCache.clear();
+    console.error('Enhanced memory manager closed');
+  }
+  
+  // Backward compatibility - stub for private method
+  async updateAccessCount(memoryId: string): Promise<void> {
+    // This is handled internally by updateMemoryAccess
+    await this.updateMemoryAccess(memoryId);
+  }
 }

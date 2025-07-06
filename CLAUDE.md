@@ -114,20 +114,34 @@ See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for 
 
 ### Memory System Features
 
+**Core Capabilities:**
 - **Autonomous Storage**: Memories are stored only if they exceed an importance threshold
 - **Multi-factor Retrieval**: Combines semantic similarity (40%), recency (30%), importance (20%), and frequency (10%)
 - **Context-aware Filtering**: Supports different contexts (general, user_preference, task_critical, obsidian_note)
 - **Vector Search**: Uses ChromaDB with OpenAI embeddings for semantic search
-- **Access Tracking**: Monitors memory access patterns for optimization
-- **Batch Operations**: Supports bulk memory operations for efficiency
 
-### Future Memory Enhancements (Hybrid Variable Tracking)
+**Enhanced Features (Implemented):**
+- **Exact Search**: Fast string matching with keyword indexing for precise lookups
+- **Hybrid Search**: Combines exact and semantic search with configurable weights (default 40% exact, 60% semantic)
+- **Token Optimization**: Smart compression achieving 50-90% reduction while preserving important content
+- **Access Pattern Tracking**: Advanced analytics with hot/warm/cold tier recommendations
+- **Compressed Context**: Token-aware memory retrieval optimized for AI consumption
 
-The platform roadmap includes advanced memory features:
-- **Exact Search**: Precise string matching for variables and functions
-- **Token Optimization**: Context compression for efficient AI consumption
-- **Tiered Storage**: Hot/warm/cold memory tiers based on access patterns
-- **Incremental Updates**: Track only changed content for performance
+### Memory Tools Available
+
+**Standard Tools:**
+- `store_memory` - Store information with AI-assessed importance
+- `recall_memories` - Semantic search for relevant memories
+- `delete_memory` - Remove specific memory
+- `clear_all_memories` - Clear entire memory collection
+- `get_memory_stats` - Get memory statistics
+
+**Enhanced Tools:**
+- `search_exact` - Exact string matching in memory content or metadata fields
+- `search_hybrid` - Combined exact and semantic search with weight control
+- `get_compressed_context` - Get token-optimized context from relevant memories
+- `get_optimized_memory` - Optimize a single memory for AI consumption
+- `analyze_access_patterns` - Get memory tier analysis and recommendations
 
 ## Development Commands
 
