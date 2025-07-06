@@ -41,6 +41,7 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 - 📝 **Obsidian Integration** - Read, write, and search notes in your Obsidian vault with semantic search
 - 📚 **Session Logging** - Automatically log Claude Code conversations to Obsidian with summaries and code highlights
 - 📋 **Template System** - Import and manage documentation templates from webhooks with Handlebars support
+- 🏗️ **Hierarchical Vault Structure** - Universal Developer Documentation System with automated folder generation and hooks
 
 #### Platform Enhancements (Coming Soon)
 - 🏗️ **Hierarchical Memory System** - Three-tier architecture (Working, Session, Long-term) with automatic migration
@@ -348,6 +349,46 @@ Synchronize templates from all configured webhook sources.
 ```
 
 See [Template System Design](./Project_Context/Template%20System%20Design.md) for detailed architecture.
+
+### Vault Structure Management Tools
+
+#### `import_vault_structure`
+Import a complete vault structure definition with templates and hooks.
+
+```typescript
+{
+  source: string;              // URL or path to structure definition
+  applyImmediately?: boolean;  // Apply structure after import
+  targetPath?: string;         // Target path (defaults to vault)
+}
+```
+
+#### `generate_vault_structure`
+Generate folder hierarchy from a loaded structure template.
+
+```typescript
+{
+  structureId?: string;        // Structure name/ID
+  targetPath: string;          // Where to generate
+  options?: {
+    skipExisting?: boolean;    // Skip existing folders
+    dryRun?: boolean;          // Preview without changes
+    applyTemplates?: boolean;  // Apply folder templates
+  }
+}
+```
+
+#### `apply_folder_hooks`
+Apply hooks to existing folders for automated actions.
+
+```typescript
+{
+  folderPath: string;          // Folder to apply hooks to
+  hookIds?: string[];          // Specific hooks (or all)
+}
+```
+
+See [Hierarchical Vault Structure System](./Project_Context/Hierarchical%20Vault%20Structure%20System.md) for complete documentation.
 
 ## 🏗️ Architecture
 
