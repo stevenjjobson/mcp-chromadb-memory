@@ -15,6 +15,7 @@ import { ObsidianManager } from './obsidian-manager.js';
 import { SessionLogger } from './session-logger.js';
 import { TemplateManager } from './template-manager.js';
 import { VaultManager } from './vault-manager.js';
+import { VaultStructureManager } from './vault-structure-manager.js';
 
 // Handle Windows-specific process signals
 if (process.platform === "win32") {
@@ -48,6 +49,7 @@ let obsidianManager: ObsidianManager | null = null;
 let sessionLogger: SessionLogger | null = null;
 let vaultManager: VaultManager | null = null;
 let templateManager: TemplateManager | null = null;
+let structureManager: VaultStructureManager | null = null;
 
 // Update the tools list in ListToolsRequestSchema handler
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -398,6 +400,86 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {}
+        },
+      },
+      {
+        name: 'import_vault_structure',
+        description: 'Import a complete vault structure with templates and hooks',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            source: {
+              type: 'string',
+              description: 'URL or path to structure definition'
+            },
+            applyImmediately: {
+              type: 'boolean',
+              description: 'Apply structure immediately after import',
+              default: false
+            },
+            targetPath: {
+              type: 'string',
+              description: 'Target path for structure (defaults to active vault)'
+            }
+          },
+          required: ['source']
+        },
+      },
+      {
+        name: 'generate_vault_structure',
+        description: 'Generate folder hierarchy from a structure template',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            structureId: {
+              type: 'string',
+              description: 'ID or name of the structure to generate'
+            },
+            targetPath: {
+              type: 'string',
+              description: 'Target path for generation'
+            },
+            options: {
+              type: 'object',
+              properties: {
+                skipExisting: {
+                  type: 'boolean',
+                  description: 'Skip folders that already exist',
+                  default: true
+                },
+                dryRun: {
+                  type: 'boolean',
+                  description: 'Preview without making changes',
+                  default: false
+                },
+                applyTemplates: {
+                  type: 'boolean',
+                  description: 'Apply templates to folders',
+                  default: true
+                }
+              }
+            }
+          },
+          required: ['targetPath']
+        },
+      },
+      {
+        name: 'apply_folder_hooks',
+        description: 'Apply hooks to existing folder structure',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            folderPath: {
+              type: 'string',
+              description: 'Folder path to apply hooks to'
+            },
+            hookIds: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Specific hook IDs to apply (optional)'
+            }
+          },
+          required: ['folderPath']
         },
       }
     ],
@@ -927,6 +1009,141 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
       }
+
+      case 'import_vault_structure': {
+        if (!structureManager) {
+          throw new Error('Vault structure manager not initialized');
+        }
+        
+        const structure = await structureManager.importStructure(args?.source as string);
+        
+        if (args?.applyImmediately) {
+          const targetPath = args?.targetPath as string || vaultManager?.getActiveVault().path || '.';
+          const report = await structureManager.generateStructure(targetPath, {
+            applyTemplates: true,
+            registerHooks: true
+          });
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  structure: {
+                    name: structure.name,
+                    version: structure.version,
+                    folders: structure.folders.length
+                  },
+                  report: {
+                    foldersCreated: report.foldersCreated,
+                    templatesApplied: report.templatesApplied,
+                    hooksRegistered: report.hooksRegistered,
+                    errors: report.errors
+                  }
+                }, null, 2)
+              }
+            ]
+          };
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                structure: {
+                  name: structure.name,
+                  version: structure.version,
+                  description: structure.description,
+                  folders: structure.folders.length,
+                  templates: structure.templates.length,
+                  hooks: structure.hooks.length
+                },
+                message: 'Structure imported successfully'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'generate_vault_structure': {
+        if (!structureManager) {
+          throw new Error('Vault structure manager not initialized');
+        }
+        
+        const currentStructure = structureManager.getStructure();
+        if (!currentStructure || (args?.structureId && currentStructure.name !== args.structureId)) {
+          throw new Error('No matching structure loaded. Use import_vault_structure first.');
+        }
+        
+        const report = await structureManager.generateStructure(
+          args?.targetPath as string,
+          args?.options as any || {}
+        );
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                report: {
+                  foldersCreated: report.foldersCreated,
+                  filesCreated: report.filesCreated,
+                  templatesApplied: report.templatesApplied,
+                  skipped: report.skipped.length,
+                  errors: report.errors
+                },
+                message: `Generated ${report.foldersCreated} folders with ${report.templatesApplied} templates`
+              }, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'apply_folder_hooks': {
+        if (!structureManager) {
+          throw new Error('Vault structure manager not initialized');
+        }
+        
+        const structure = structureManager.getStructure();
+        if (!structure) {
+          throw new Error('No structure loaded');
+        }
+        
+        const folderPath = args?.folderPath as string;
+        const hookIds = args?.hookIds as string[] || structure.hooks.map(h => h.id);
+        
+        const results = [];
+        for (const hookId of hookIds) {
+          const result = await structureManager.executeHook(hookId, {
+            targetPath: folderPath,
+            event: 'manual',
+            variables: {},
+            structure
+          });
+          results.push({ hookId, ...result });
+        }
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                hooksApplied: results.length,
+                results: results.map(r => ({
+                  hookId: r.hookId,
+                  success: r.success,
+                  message: r.message
+                }))
+              }, null, 2)
+            }
+          ]
+        };
+      }
         
       default:
         throw new Error(`Unknown tool: ${name}`);
@@ -1005,6 +1222,12 @@ async function main() {
         });
         await templateManager.initialize();
         console.error('Template manager initialized successfully');
+        
+        // Initialize structure manager
+        console.error('Initializing vault structure manager...');
+        structureManager = new VaultStructureManager(templateManager, vaultManager);
+        await structureManager.initialize();
+        console.error('Vault structure manager initialized successfully');
       }
     } else {
       console.error('Obsidian vault path not configured, skipping Obsidian integration');
