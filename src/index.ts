@@ -27,6 +27,7 @@ import { ObsidianManager } from './obsidian-manager.js';
 import { SessionLogger } from './session-logger.js';
 import { TemplateManager } from './template-manager.js';
 import { VaultManager } from './vault-manager.js';
+import { StateManager } from './state-manager.js';
 import { VaultStructureManager } from './vault-structure-manager.js';
 import { VaultIndexService } from './services/vault-index-service.js';
 import { MemoryHealthMonitor } from './services/memory-health-monitor.js';
@@ -71,6 +72,7 @@ let memoryPatternService: MemoryPatternService | null = null;
 let obsidianManager: ObsidianManager | null = null;
 let sessionLogger: SessionLogger | null = null;
 let vaultManager: VaultManager | null = null;
+let stateManager: StateManager | null = null;
 let templateManager: TemplateManager | null = null;
 let structureManager: VaultStructureManager | null = null;
 let vaultIndexService: VaultIndexService | null = null;
@@ -659,6 +661,162 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: 'object',
           properties: {}
+        },
+      },
+      // Vault management tools
+      {
+        name: 'register_vault',
+        description: 'Register a new vault for multi-project support',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string',
+              description: 'Vault name'
+            },
+            path: {
+              type: 'string',
+              description: 'Vault path'
+            },
+            type: {
+              type: 'string',
+              enum: ['project', 'personal', 'team'],
+              description: 'Vault type',
+              default: 'personal'
+            }
+          },
+          required: ['name', 'path']
+        },
+      },
+      {
+        name: 'switch_vault',
+        description: 'Switch to a different vault',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            vaultId: {
+              type: 'string',
+              description: 'ID of the vault to switch to'
+            }
+          },
+          required: ['vaultId']
+        },
+      },
+      {
+        name: 'list_vaults',
+        description: 'List all registered vaults',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        },
+      },
+      {
+        name: 'backup_vault',
+        description: 'Create a backup of the current or specified vault',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            vaultId: {
+              type: 'string',
+              description: 'Optional vault ID to backup'
+            }
+          }
+        },
+      },
+      {
+        name: 'restore_vault',
+        description: 'Restore a vault from backup',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            backupPath: {
+              type: 'string',
+              description: 'Path to the backup file'
+            },
+            targetVaultId: {
+              type: 'string',
+              description: 'Optional target vault ID'
+            }
+          },
+          required: ['backupPath']
+        },
+      },
+      // State management tools
+      {
+        name: 'capture_state',
+        description: 'Capture current working context and memory state',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string',
+              description: 'State name'
+            },
+            description: {
+              type: 'string',
+              description: 'Optional description'
+            },
+            tags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Optional tags'
+            },
+            importance: {
+              type: 'number',
+              description: 'Importance score (0-1)',
+              default: 0.7
+            },
+            expiresInDays: {
+              type: 'number',
+              description: 'Days until expiration'
+            }
+          },
+          required: ['name']
+        },
+      },
+      {
+        name: 'restore_state',
+        description: 'Restore a previously captured state',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            stateId: {
+              type: 'string',
+              description: 'ID of the state to restore'
+            }
+          },
+          required: ['stateId']
+        },
+      },
+      {
+        name: 'list_states',
+        description: 'List available captured states',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            vaultId: {
+              type: 'string',
+              description: 'Optional vault ID filter'
+            }
+          }
+        },
+      },
+      {
+        name: 'diff_states',
+        description: 'Compare two captured states',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            stateId1: {
+              type: 'string',
+              description: 'First state ID'
+            },
+            stateId2: {
+              type: 'string',
+              description: 'Second state ID'
+            }
+          },
+          required: ['stateId1', 'stateId2']
         },
       }
     ],
@@ -1532,6 +1690,224 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
       }
+      
+      // Vault management tools
+      case 'register_vault': {
+        if (!vaultManager) {
+          throw new Error('Vault manager not initialized');
+        }
+        if (!args || !args.name || !args.path) {
+          throw new Error('Missing required arguments: name and path');
+        }
+        const vaultId = await vaultManager.registerVault(
+          args.name as string,
+          args.path as string,
+          args.type as any || 'personal'
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                vaultId,
+                message: `Vault "${args.name}" registered successfully`
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'switch_vault': {
+        if (!vaultManager) {
+          throw new Error('Vault manager not initialized');
+        }
+        if (!args || !args.vaultId) {
+          throw new Error('Missing required argument: vaultId');
+        }
+        await vaultManager.switchVault(args.vaultId as string);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: 'Vault switched successfully'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'list_vaults': {
+        if (!vaultManager) {
+          throw new Error('Vault manager not initialized');
+        }
+        const vaults = await vaultManager.listVaults();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                vaults: vaults.map(v => ({
+                  id: v.id,
+                  name: v.name,
+                  path: v.path,
+                  type: v.type,
+                  isActive: v.isActive,
+                  lastAccessed: v.lastAccessed
+                }))
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'backup_vault': {
+        if (!vaultManager) {
+          throw new Error('Vault manager not initialized');
+        }
+        const backupPath = await vaultManager.backupVault(args?.vaultId as string);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                backupPath,
+                message: 'Vault backed up successfully'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'restore_vault': {
+        if (!vaultManager) {
+          throw new Error('Vault manager not initialized');
+        }
+        if (!args || !args.backupPath) {
+          throw new Error('Missing required argument: backupPath');
+        }
+        await vaultManager.restoreVault(
+          args.backupPath as string,
+          args.targetVaultId as string
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: 'Vault restored successfully'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
+      // State management tools
+      case 'capture_state': {
+        if (!stateManager) {
+          throw new Error('State manager not initialized');
+        }
+        if (!args || !args.name) {
+          throw new Error('Missing required argument: name');
+        }
+        const stateId = await stateManager.captureState(
+          args.name as string,
+          {
+            description: args.description as string,
+            tags: args.tags as string[],
+            importance: args.importance as number,
+            expiresInDays: args.expiresInDays as number
+          }
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                stateId,
+                message: `State "${args.name}" captured successfully`
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'restore_state': {
+        if (!stateManager) {
+          throw new Error('State manager not initialized');
+        }
+        if (!args || !args.stateId) {
+          throw new Error('Missing required argument: stateId');
+        }
+        await stateManager.restoreState(args.stateId as string);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                message: 'State restored successfully'
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'list_states': {
+        if (!stateManager) {
+          throw new Error('State manager not initialized');
+        }
+        const states = await stateManager.listStates(args?.vaultId as string);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                states: states.map(s => ({
+                  id: s.id,
+                  name: s.metadata.name,
+                  timestamp: s.timestamp,
+                  description: s.metadata.description,
+                  tags: s.metadata.tags,
+                  size: s.size,
+                  compressed: s.compressed
+                }))
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'diff_states': {
+        if (!stateManager) {
+          throw new Error('State manager not initialized');
+        }
+        if (!args || !args.stateId1 || !args.stateId2) {
+          throw new Error('Missing required arguments: stateId1 and stateId2');
+        }
+        const diff = await stateManager.diffStates(
+          args.stateId1 as string,
+          args.stateId2 as string
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                diff
+              }, null, 2)
+            }
+          ]
+        };
+      }
         
       default:
         throw new Error(`Unknown tool: ${name}`);
@@ -1803,6 +2179,18 @@ async function main() {
       vaultManager = new VaultManager(obsidianManager);
       await vaultManager.initialize();
       console.error('Vault manager initialized successfully');
+      
+      // Initialize state manager
+      if (vaultManager && memoryManager) {
+        console.error('Initializing state manager...');
+        stateManager = new StateManager(vaultManager, memoryManager, {
+          statesPath: '.states',
+          maxStatesPerVault: parseInt(process.env.MAX_STATES_PER_VAULT || '100'),
+          compressionEnabled: process.env.STATE_COMPRESSION !== 'false'
+        });
+        await stateManager.initialize();
+        console.error('State manager initialized successfully');
+      }
       
       // Initialize template manager
       if (vaultManager) {

@@ -85,12 +85,25 @@ If automatic logging is not enabled, you should:
 
 See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for the 20-day transformation plan.
 
-### Key Upcoming Features
-1. **Hierarchical Memory System**: Three-tier architecture for optimal performance
-2. **Vault Management**: Multi-project support with hot-swapping
-3. **State Capture**: Complete context preservation and restoration
-4. **Pattern Recognition**: Learning from development patterns
-5. **Background Services**: Automatic optimization and maintenance
+### Key Platform Features
+1. **Vault Management** (Implemented): Multi-project support with hot-swapping
+   - Register multiple vaults for different projects
+   - Switch between vaults instantly
+   - Backup and restore vault contents
+   - Full registry persistence
+2. **State Capture** (Implemented): Complete context preservation and restoration
+   - Capture working context and memory state
+   - Restore previous states on demand
+   - Compare states with diff functionality
+   - Automatic cleanup and expiration
+3. **Enhanced Memory System** (Implemented): Advanced search and optimization
+   - Exact string matching with O(1) lookup
+   - Hybrid search combining exact and semantic
+   - Token compression (50-90% reduction)
+   - Access pattern tracking
+4. **Hierarchical Memory System** (Upcoming): Three-tier architecture for optimal performance
+5. **Pattern Recognition** (Upcoming): Learning from development patterns
+6. **Background Services** (Upcoming): Automatic optimization and maintenance
 
 ## Architecture
 
@@ -142,6 +155,19 @@ See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for 
 - `get_compressed_context` - Get token-optimized context from relevant memories
 - `get_optimized_memory` - Optimize a single memory for AI consumption
 - `analyze_access_patterns` - Get memory tier analysis and recommendations
+
+**Vault Management Tools:**
+- `register_vault` - Register a new vault for multi-project support
+- `switch_vault` - Switch to a different vault instantly
+- `list_vaults` - List all registered vaults
+- `backup_vault` - Create a backup of current or specified vault
+- `restore_vault` - Restore a vault from backup
+
+**State Management Tools:**
+- `capture_state` - Capture current working context and memory state
+- `restore_state` - Restore a previously captured state
+- `list_states` - List available captured states
+- `diff_states` - Compare two captured states
 
 ## Development Commands
 
