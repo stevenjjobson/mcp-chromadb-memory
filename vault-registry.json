@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "activeVaultId": "vault_1751851868520_e87wbfsrf",
+  "vaults": {
+    "vault_1751851868520_e87wbfsrf": {
+      "id": "vault_1751851868520_e87wbfsrf",
+      "name": "Default Vault",
+      "path": "./Project_Context/vault/Development",
+      "type": "personal",
+      "created": "2025-07-07T01:31:08.520Z",
+      "lastAccessed": "2025-07-07T01:31:08.520Z",
+      "lastModified": "2025-07-07T01:31:08.520Z",
+      "isActive": true,
+      "metadata": {
+        "source": "obsidian"
+      }
+    }
+  },
+  "defaultSettings": {
+    "autoSwitch": true,
+    "backupOnSwitch": true,
+    "compressBackups": true
+  }
+}

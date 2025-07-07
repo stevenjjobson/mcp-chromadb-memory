@@ -1,0 +1,33 @@
+services:
+  chromadb-DEVELOPMENT:
+    image: chromadb/chroma:latest
+    container_name: chromadb-DEVELOPMENT
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./data/chroma-DEVELOPMENT:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:8000/docs || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - memory-network-DEVELOPMENT
+    labels:
+      - "environment=DEVELOPMENT"
+      - "purpose=testing-hierarchical-memory"
+
+networks:
+  memory-network-DEVELOPMENT:
+    driver: bridge
+
+# Development-specific secrets (if needed)
+secrets:
+  openai_api_key:
+    file: ./secrets/openai_api_key.txt
+  github_access_token:
+    file: ./secrets/github_access_token.txt

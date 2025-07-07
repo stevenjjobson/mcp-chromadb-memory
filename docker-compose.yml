@@ -42,7 +42,7 @@ services:
   #     - github_access_token
   #   volumes:
   #     - ./data/memories:/app/data
-  #     - C:/Users/Steve/Obsidian/StevesVault:/vault:ro
+  #     - ./Project_Context/vault:/vault:rw
   #   networks:
   #     - memory-network
   #   command: ["node", "dist/index.js"]

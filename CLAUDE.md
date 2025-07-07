@@ -80,10 +80,11 @@ If automatic logging is not enabled, you should:
 
 ## Platform Transformation Status
 
-**Current Version**: 1.0 (Basic memory server)
+**Current Version**: 1.5 (Enhanced memory server with dual-instance development)
 **Target Version**: 2.0 (Cognitive State Management Platform)
 
 See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for the 20-day transformation plan.
+See [Development Status](./Project_Context/DEVELOPMENT_STATUS.md) for current progress.
 
 ### Key Platform Features
 1. **Vault Management** (Implemented): Multi-project support with hot-swapping
@@ -201,7 +202,11 @@ npm run docker:run
 
 From the project directory:
 ```bash
+# For production (Claude Desktop)
 docker-compose up -d chromadb
+
+# For development testing
+./scripts/env-manager.sh start-dev
 ```
 
 ## Testing
@@ -232,6 +237,9 @@ See CLAUDE_DESKTOP_SETUP.md for detailed configuration instructions.
 ## Additional Documentation
 
 For setup guides and detailed documentation, see:
+- **Memory Usage Guide**: `MEMORY_USAGE_GUIDE.md` - How to effectively use the memory system
+- **Dual Instance Setup**: `Project_Context/DUAL_INSTANCE_SETUP.md` - Development environment isolation
+- **Development Status**: `Project_Context/DEVELOPMENT_STATUS.md` - Current progress and next steps
 - **Setup Guides**: `Project_Context/vault/Knowledge/Setup/`
 - **Architecture Decisions**: `Project_Context/vault/Architecture/`
 - **Historical Documents**: `Project_Context/vault/Archive/`

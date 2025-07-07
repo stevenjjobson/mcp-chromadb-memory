@@ -57,6 +57,15 @@ export class EnhancedMemoryManager {
   }
   
   async initialize(): Promise<void> {
+    // Safety check for production
+    if (this.config.environment === 'PRODUCTION' && this.config.tierEnabled) {
+      throw new Error('🚨 TIERS CANNOT BE ENABLED IN PRODUCTION YET! Please test in DEVELOPMENT first.');
+    }
+    
+    if (this.config.isDevelopment) {
+      console.warn('🧪 Running in DEVELOPMENT mode - changes are isolated from production');
+    }
+    
     try {
       // Test connection with retry for Docker startup
       let retries = 5;

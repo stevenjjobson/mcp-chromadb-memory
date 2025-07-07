@@ -1,4 +1,5 @@
 import { ObsidianManager } from './obsidian-manager.js';
+import { config } from './config.js';
 import path from 'path';
 
 interface SessionEntry {
@@ -29,7 +30,7 @@ export class SessionLogger {
   private sessionSummary: SessionSummary;
   private sessionId: string;
   private autoSave: boolean = true;
-  private sessionFolder: string = 'Claude Code Sessions';
+  private sessionFolder: string = 'Sessions';
   
   constructor(obsidianManager: ObsidianManager, project: string = 'Unknown Project') {
     this.obsidianManager = obsidianManager;
@@ -176,6 +177,7 @@ export class SessionLogger {
 date: ${dateStr}
 time: ${timeStr}
 project: ${this.sessionSummary.project}
+environment: ${config.environment}
 tags: [claude-code, ${uniqueTopics.map(t => t.toLowerCase().replace(/\s+/g, '-')).join(', ')}]
 tools: [${Array.from(this.sessionSummary.toolsUsed).join(', ')}]
 ---
@@ -286,13 +288,19 @@ tools: [${Array.from(this.sessionSummary.toolsUsed).join(', ')}]
     this.sessionSummary.endTime = new Date();
     
     const now = new Date();
-    const year = String(now.getFullYear()).slice(-2); // Get last 2 digits of year
+    const year = String(now.getFullYear());
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     
-    // Simple file naming: YY-MM-DD Project Name session.md
-    const fileName = `${year}-${month}-${day} ${this.sessionSummary.project} session.md`;
-    const notePath = `${this.sessionFolder}/${fileName}`;
+    // Clean project name for filename (replace spaces with hyphens)
+    const cleanProjectName = this.sessionSummary.project.replace(/\s+/g, '-');
+    
+    // Improved file naming: YYYY-MM-DD-Project-Name.md
+    const fileName = `${year}-${month}-${day}-${cleanProjectName}.md`;
+    
+    // Create year/month folder structure
+    const folderPath = `${this.sessionFolder}/${year}/${month}`;
+    const notePath = `${folderPath}/${fileName}`;
     
     // Generate note content
     let noteContent = this.generateObsidianNote();

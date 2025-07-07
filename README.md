@@ -65,6 +65,12 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 - 2GB RAM minimum
 - Windows/macOS/Linux
 
+## 📖 Quick References
+
+- **[Memory Usage Guide](./MEMORY_USAGE_GUIDE.md)** - Learn how to effectively use the memory system
+- **[Dual Instance Setup](./Project_Context/DUAL_INSTANCE_SETUP.md)** - Set up isolated development environment
+- **[Development Status](./Project_Context/DEVELOPMENT_STATUS.md)** - Current progress and roadmap
+
 ## 🚀 Quick Start
 
 ### Using Docker Compose (Recommended)
@@ -188,7 +194,7 @@ MCP_SERVER_VERSION=1.0.0
         "-i",
         "--rm",
         "--network", "mcp-chromadb-memory_memory-network",
-        "-v", "C:/Users/Steve/Obsidian/StevesVault:/vault:ro",
+        "-v", "C:/Users/Steve/Dockers/mcp-chromadb-memory/Project_Context/vault:/vault:rw",
         "-e", "DOCKER_CONTAINER=true",
         "-e", "CHROMA_HOST=chromadb",
         "-e", "CHROMA_PORT=8000",
@@ -507,6 +513,23 @@ The retrieval system uses a sophisticated multi-factor scoring approach:
 - **Frequency Score (10%)**: Logarithmic scaling of access count
 
 ## 🛠️ Development
+
+### Dual-Instance Development
+
+For safe testing of new features, use the isolated development environment:
+
+```bash
+# Start development environment
+./scripts/env-manager.sh start-dev
+
+# Check status
+./scripts/env-manager.sh status
+
+# Run in development mode
+./scripts/test-hierarchical.sh
+```
+
+This creates a completely separate ChromaDB instance on port 8001 with its own data and configuration.
 
 ### Available Scripts
 

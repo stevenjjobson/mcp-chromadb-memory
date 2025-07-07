@@ -4,9 +4,17 @@ This folder contains automatically generated session logs from Claude Code devel
 
 ## Naming Convention
 
-Files follow the pattern: `YY-MM-DD Project Name session.md`
+Files follow the pattern: `YYYY-MM-DD-Project-Name.md`
 
-Example: `25-01-05 MCP ChromaDB Memory session.md`
+Example: `2025-01-07-MCP-ChromaDB-Memory.md`
+
+Sessions are organized in year/month folders:
+```
+Sessions/
+└── 2025/
+    └── 01/
+        └── 2025-01-07-MCP-ChromaDB-Memory.md
+```
 
 ## Session Structure
 
@@ -17,6 +25,7 @@ Each session includes:
 date: YYYY-MM-DD
 time: HH:MM
 project: Project Name
+environment: PRODUCTION
 tags: [relevant, tags]
 tools: [tools, used]
 ```
