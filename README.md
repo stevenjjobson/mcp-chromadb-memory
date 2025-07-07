@@ -51,9 +51,13 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 - 🏗️ **Hierarchical Memory System** - Three-tier architecture (Working, Session, Long-term) with automatic migration
 - 🔄 **Vault Management** - Multi-project support with instant context switching
 - 💾 **State Capture** - Save and restore complete working context across devices
+- 🧠 **Code Intelligence** - Automatic codebase indexing with symbol tracking and relationships
+- 🔍 **Code-Aware Search** - Stream-based symbol search, find implementations and patterns instantly
+- 📊 **Code Pattern Recognition** - Detect and learn from coding patterns, suggest improvements
+- ⚡ **Streaming Responses** - Fast, incremental results optimized for Claude Code and large codebases
 
 #### Platform Enhancements (Coming Soon)
-- 🧬 **Pattern Recognition** - Learn from development patterns and suggest solutions
+- 🧬 **Advanced Pattern Recognition** - Deep learning from development patterns across projects
 - 🔄 **Memory Consolidation** - Intelligent deduplication and memory merging
 - 🔀 **Git Integration** - Link memories to commits, branches, and pull requests
 
@@ -469,6 +473,51 @@ TIER_MIGRATION_INTERVAL=3600000 # Milliseconds (1 hour)
 
 The migration service runs automatically in the background, moving memories between tiers based on age and access patterns.
 
+### Code Intelligence System
+
+The platform includes advanced code intelligence capabilities optimized for Claude Code and development workflows:
+
+#### Code Intelligence Tools
+
+- `index_codebase` - Fast symbol extraction and storage with streaming support
+- `find_symbol` - Stream-based symbol search across your codebase
+- `get_symbol_context` - Rich context retrieval including imports, usage, and relationships
+- `analyze_code_patterns` - Detect patterns, anti-patterns, and improvement opportunities
+
+#### Code Memory Features
+
+1. **Automatic Symbol Indexing**
+   - Functions, classes, methods, and variables
+   - Import relationships and dependencies
+   - File structure and organization
+   - Automatic updates on file changes
+
+2. **Streaming Architecture**
+   - Results stream as they're found (<50ms first result)
+   - Prioritized results (exact matches first)
+   - Background semantic search
+   - Optimized for large codebases
+
+3. **Code-Aware Search**
+   - Natural language to code queries
+   - Symbol type filtering
+   - Relationship navigation
+   - Pattern-based search
+
+#### Configuration
+
+```env
+# Code Intelligence Configuration
+CODE_INDEXING_ENABLED=true
+CODE_INDEXING_PATTERNS="**/*.{js,ts,py,java,go,rs,cpp}"
+CODE_INDEXING_EXCLUDE="**/node_modules/**,**/dist/**,**/.git/**"
+CODE_PATTERN_DETECTION=true
+CODE_STREAMING_ENABLED=true
+CODE_CACHE_SIZE=1000
+```
+
+See [Code Intelligence Guide](./CODE_INTELLIGENCE_GUIDE.md) for detailed usage and examples.
+
 ## 🏗️ Architecture
 
 ### Current Architecture
@@ -479,12 +528,16 @@ mcp-chromadb-memory/
 │   ├── index.ts              # MCP server entry point
 │   ├── config.ts             # Configuration management
 │   ├── memory-manager.ts     # ChromaDB operations & memory logic
+│   ├── memory-manager-enhanced.ts # Enhanced with tier support
 │   ├── obsidian-manager.ts   # Obsidian vault integration
 │   ├── session-logger.ts     # Session capture and logging
 │   ├── template-manager.ts   # Template system with webhook support
 │   ├── vault-manager.ts      # Vault management wrapper
 │   └── services/
-│       └── http-client.ts    # HTTP client for webhooks
+│       ├── code-indexer.ts   # Symbol extraction & indexing
+│       ├── code-pattern-detector.ts # Pattern recognition
+│       ├── streaming-manager.ts # Streaming response handler
+│       └── migration-service.ts # Tier migration service
 ├── Project_Context/
 │   ├── vault/               # Project-specific Obsidian vault
 │   │   └── Templates/       # Documentation templates
@@ -515,6 +568,7 @@ graph TD
         C2[Session Processor]
         C3[State Manager]
         C4[Vault Manager]
+        C5[Code Intelligence]
     end
     
     subgraph "Memory Layer"

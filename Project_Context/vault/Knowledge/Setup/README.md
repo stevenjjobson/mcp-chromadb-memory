@@ -13,6 +13,7 @@ This directory contains comprehensive setup and configuration documentation for 
 ### Integration Guides
 - **OBSIDIAN_INTEGRATION.md** - Obsidian vault integration setup
 - **SESSION_LOGGING.md** - Session logging feature configuration
+- **CODE_INTELLIGENCE_GUIDE.md** (coming soon) - Code intelligence features setup
 
 ### Monitoring
 - **HEALTH_MONITORING.md** - System health monitoring and diagnostics

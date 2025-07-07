@@ -243,40 +243,51 @@ This roadmap details the step-by-step transformation of the MCP ChromaDB Memory 
 
 ## Phase 3: Intelligence Layer (Days 11-15)
 
-### Day 11: Session Processor Enhancement
+### Day 11: Code Intelligence Foundation
 **Morning (4 hours)**
-- [ ] Enhance `src/session-processor.ts`:
+- [ ] Create code symbol memory type:
   ```typescript
-  export class IntelligentSessionProcessor extends SessionProcessor {
-    async extractPatterns(session: Session): Promise<Pattern[]>
-    async identifyDecisions(content: string): Promise<Decision[]>
-    async extractCodeSnippets(content: string): Promise<CodeSnippet[]>
-    async generateSummary(session: Session): Promise<Summary>
+  interface CodeSymbolMemory extends Memory {
+    symbolType: 'function' | 'class' | 'variable' | 'import';
+    filePath: string;
+    lineNumber: number;
+    signature?: string;
+    dependencies: string[];
+    relationships: SymbolRelationship[];
+  }
+  ```
+- [ ] Implement `src/services/code-indexer.ts`:
+  ```typescript
+  export class CodeIndexer {
+    async indexFile(filePath: string): Promise<CodeSymbol[]>
+    async extractSymbols(content: string, language: string): Promise<CodeSymbol[]>
+    async updateIndex(symbol: CodeSymbol): Promise<void>
   }
   ```
 
 **Afternoon (4 hours)**
-- [ ] Implement pattern extraction using NLP
-- [ ] Add decision identification logic
-- [ ] Create code snippet analyzer
-- [ ] Test extraction accuracy
+- [ ] Create streaming response system
+- [ ] Implement code intelligence MCP tools
+- [ ] Add natural language to code mapping
+- [ ] Test with Claude Code scenarios
 
-### Day 12: Pattern Recognition Service
+### Day 12: Enhanced Pattern Recognition with Code
 **Morning (4 hours)**
-- [ ] Create `src/services/pattern-service.ts`:
+- [ ] Extend `src/services/pattern-service.ts` for code:
   ```typescript
-  export class PatternService {
-    async analyzePatterns(memories: Memory[]): Promise<Pattern[]>
-    async suggestBasedOnPattern(context: Context): Promise<Suggestion[]>
-    async trackPatternSuccess(patternId: string, success: boolean): Promise<void>
+  export class CodePatternService extends PatternService {
+    async detectCodePatterns(symbols: CodeSymbol[]): Promise<CodePattern[]>
+    async findSimilarImplementations(symbol: CodeSymbol): Promise<SimilarCode[]>
+    async suggestRefactoring(pattern: CodePattern): Promise<Refactoring[]>
+    async trackCodeQuality(filePath: string): Promise<QualityMetrics>
   }
   ```
 
 **Afternoon (4 hours)**
-- [ ] Implement frequency analysis
-- [ ] Create pattern matching algorithms
-- [ ] Add reinforcement learning basics
-- [ ] Build suggestion engine
+- [ ] Implement code pattern detection algorithms
+- [ ] Create symbol relationship mapping
+- [ ] Add predictive code loading
+- [ ] Build code quality analyzer
 
 ### Day 13: Git Integration
 **Morning (4 hours)**
@@ -295,25 +306,23 @@ This roadmap details the step-by-step transformation of the MCP ChromaDB Memory 
 - [ ] Create branch-aware queries
 - [ ] Test git integration
 
-### Day 14: Background Service Coordinator
+### Day 14: Session Processor with Code Intelligence
 **Morning (4 hours)**
-- [ ] Create `src/services/service-coordinator.ts`:
+- [ ] Enhance `src/session-processor.ts` for code:
   ```typescript
-  export class ServiceCoordinator {
-    private services: Map<string, BackgroundService>;
-    
-    async registerService(name: string, service: BackgroundService): Promise<void>
-    async startAll(): Promise<void>
-    async stopAll(): Promise<void>
-    async getStatus(): Promise<ServiceStatus[]>
+  export class CodeAwareSessionProcessor extends SessionProcessor {
+    async extractCodeSnippets(session: Session): Promise<CodeSnippet[]>
+    async trackSymbolReferences(content: string): Promise<SymbolRef[]>
+    async analyzeImports(session: Session): Promise<ImportGraph>
+    async generateCodeSummary(snippets: CodeSnippet[]): Promise<string>
   }
   ```
 
 **Afternoon (4 hours)**
-- [ ] Implement service lifecycle management
-- [ ] Add health monitoring
-- [ ] Create service dependencies
-- [ ] Test coordination logic
+- [ ] Implement code extraction from sessions
+- [ ] Add symbol reference tracking
+- [ ] Create import dependency analysis
+- [ ] Test with real Claude Code sessions
 
 ### Day 15: Platform Integration
 **Morning (4 hours)**

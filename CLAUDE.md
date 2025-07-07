@@ -80,11 +80,12 @@ If automatic logging is not enabled, you should:
 
 ## Platform Transformation Status
 
-**Current Version**: 2.0 (Cognitive State Management Platform)
-**Status**: Phase 2 Complete - Hierarchical Memory System Deployed
+**Current Version**: 2.1 (Cognitive State Management Platform with Code Intelligence)
+**Status**: Phase 3 In Progress - Code Intelligence Integration Active
 
 See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for the 20-day transformation plan.
 See [Development Status](./DEVELOPMENT_STATUS.md) for detailed progress.
+See [Code Intelligence Guide](./CODE_INTELLIGENCE_GUIDE.md) for code-aware features.
 
 ### Key Platform Features
 1. **Vault Management** (Implemented): Multi-project support with hot-swapping
@@ -107,8 +108,13 @@ See [Development Status](./DEVELOPMENT_STATUS.md) for detailed progress.
    - Session tier (14d) for recent development
    - Long-term tier (permanent) for critical knowledge
    - Automatic migration between tiers
-5. **Pattern Recognition** (Upcoming): Learning from development patterns
-6. **Background Services** (Upcoming): Automatic optimization and maintenance
+5. **Code Intelligence** (In Progress): Claude Code optimized features
+   - Automatic codebase indexing with symbol tracking
+   - Stream-based symbol search for instant results
+   - Code pattern detection and analysis
+   - Natural language to code queries
+6. **Pattern Recognition** (In Progress): Learning from development patterns
+7. **Background Services** (Upcoming): Automatic optimization and maintenance
 
 ## Architecture
 
@@ -116,19 +122,26 @@ See [Development Status](./DEVELOPMENT_STATUS.md) for detailed progress.
 
 1. **MCP Server** (`src/index.ts`): Handles stdio communication and tool endpoints
 2. **Memory Manager** (`src/memory-manager.ts`): Manages ChromaDB operations and memory logic
-3. **Configuration** (`src/config.ts`): Environment-based configuration with Docker support
-4. **Obsidian Manager** (`src/obsidian-manager.ts`): Vault integration and note operations
-5. **Session Logger** (`src/session-logger.ts`): Development session capture
-6. **Vault Index Service** (`src/services/vault-index-service.ts`): Real-time vault statistics and health monitoring
-7. **Memory Health Monitor** (`src/services/memory-health-monitor.ts`): Memory system diagnostics and optimization
+3. **Enhanced Memory Manager** (`src/memory-manager-enhanced.ts`): Tier support and streaming
+4. **Configuration** (`src/config.ts`): Environment-based configuration with Docker support
+5. **Obsidian Manager** (`src/obsidian-manager.ts`): Vault integration and note operations
+6. **Session Logger** (`src/session-logger.ts`): Development session capture
+7. **Vault Index Service** (`src/services/vault-index-service.ts`): Real-time vault statistics and health monitoring
+8. **Memory Health Monitor** (`src/services/memory-health-monitor.ts`): Memory system diagnostics and optimization
 
-### Planned Platform Components
+### Code Intelligence Components (In Development)
+
+1. **Code Indexer** (`src/services/code-indexer.ts`): Symbol extraction and indexing
+2. **Code Pattern Detector** (`src/services/code-pattern-detector.ts`): Pattern recognition in code
+3. **Streaming Manager** (`src/services/streaming-manager.ts`): Fast incremental responses
+4. **Symbol Relationship Mapper** (`src/services/symbol-mapper.ts`): Track code relationships
+
+### Implemented Platform Components
 
 1. **Vault Manager** (`src/vault-manager.ts`): Multi-project vault management
 2. **State Manager** (`src/state-manager.ts`): Context capture and restoration
-3. **Hierarchical Memory Manager** (`src/memory-manager-v2.ts`): Three-tier memory system
-4. **Pattern Service** (`src/services/pattern-service.ts`): Pattern recognition and learning
-5. **Migration Service** (`src/services/migration-service.ts`): Automatic tier management
+3. **Migration Service** (`src/services/migration-service.ts`): Automatic tier management
+4. **Pattern Service** (`src/services/memory-pattern-service.ts`): Basic pattern recognition
 
 ### Memory System Features
 
@@ -178,6 +191,13 @@ See [Development Status](./DEVELOPMENT_STATUS.md) for detailed progress.
 - `get_tier_stats` - View memory distribution and statistics across all tiers
 - `analyze_access_patterns` - Get tier recommendations based on memory usage
 - `get_memories_for_migration` - Preview memories pending tier migration
+
+**Code Intelligence Tools (In Development):**
+- `index_codebase` - Fast symbol extraction and storage with streaming support
+- `find_symbol` - Stream-based symbol search across your codebase
+- `get_symbol_context` - Rich context retrieval including imports, usage, and relationships
+- `analyze_code_patterns` - Detect patterns, anti-patterns, and improvement opportunities
+- `search_code_natural` - Natural language queries to find code implementations
 
 ## Development Commands
 
@@ -248,12 +268,30 @@ When testing the memory server:
 The MCP server is configured in `%APPDATA%\Claude\claude_desktop_config.json` on Windows.
 See CLAUDE_DESKTOP_SETUP.md for detailed configuration instructions.
 
+## Code Intelligence Configuration
+
+When code intelligence features are enabled, add these to your environment:
+
+```env
+# Code Intelligence (DEVELOPMENT testing)
+CODE_INDEXING_ENABLED=true
+CODE_INDEXING_PATTERNS="**/*.{js,ts,py,java,go,rs,cpp}"
+CODE_INDEXING_EXCLUDE="**/node_modules/**,**/dist/**,**/.git/**"
+CODE_PATTERN_DETECTION=true
+CODE_STREAMING_ENABLED=true
+CODE_CACHE_SIZE=1000
+CODE_SYMBOL_CONTEXT_LINES=15
+```
+
+**Note**: Code intelligence features are currently in development and should be tested in the DEVELOPMENT environment first.
+
 ## Additional Documentation
 
 For setup guides and detailed documentation, see:
+- **Code Intelligence Guide**: `CODE_INTELLIGENCE_GUIDE.md` - Using code-aware features
 - **Memory Usage Guide**: `MEMORY_USAGE_GUIDE.md` - How to effectively use the memory system
 - **Dual Instance Setup**: `Project_Context/DUAL_INSTANCE_SETUP.md` - Development environment isolation
-- **Development Status**: `Project_Context/DEVELOPMENT_STATUS.md` - Current progress and next steps
+- **Development Status**: `DEVELOPMENT_STATUS.md` - Current progress and next steps
 - **Setup Guides**: `Project_Context/vault/Knowledge/Setup/`
 - **Architecture Decisions**: `Project_Context/vault/Architecture/`
 - **Historical Documents**: `Project_Context/vault/Archive/`

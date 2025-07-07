@@ -21,6 +21,7 @@ graph TB
         B --> D[Memory Service]
         B --> E[State Service]
         B --> F[Vault Service]
+        B --> CI[Code Intelligence Service]
         
         G[Command Registry] --> B
         H[Provider Registry] --> B
@@ -98,6 +99,13 @@ export class ServiceContainer {
 - Implements vault switching
 - Handles backup/restore
 - Provides vault statistics
+
+#### Code Intelligence Service
+- Integrates with MCP code tools
+- Manages symbol indexing
+- Provides streaming search
+- Handles pattern detection
+- Tracks code relationships
 
 ## Provider Architecture
 

@@ -75,6 +75,9 @@ In `.env.DEVELOPMENT`:
 - `TIER_ENABLED=true` - Enable hierarchical memory tiers
 - `CONSOLIDATION_ENABLED=true` - Enable memory consolidation
 - `PATTERN_RECOGNITION_ENABLED=true` - Enable pattern recognition
+- `CODE_INDEXING_ENABLED=true` - Enable code intelligence features
+- `CODE_STREAMING_ENABLED=true` - Enable streaming responses
+- `CODE_PATTERN_DETECTION=true` - Enable code pattern analysis
 
 ## Migration Path
 

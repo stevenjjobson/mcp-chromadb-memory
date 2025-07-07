@@ -86,10 +86,11 @@ const patterns = await memoryPatternService.analyzeAccessPatterns();
 - Confirms backward compatibility
 
 ## Next Steps (Future Enhancements)
-1. **Incremental Updates** - Update exact index on file changes
-2. **Full Tiered Storage** - Implement complete 3-tier memory system
-3. **Advanced Compression** - AST-based code compression
-4. **Multi-language Support** - Extend variable tracking beyond JavaScript/TypeScript
+1. **Code Intelligence Integration** - Symbol indexing with streaming search (Phase 3)
+2. **Incremental Updates** - Update exact index on file changes
+3. **Full Tiered Storage** - Implement complete 3-tier memory system
+4. **Advanced Compression** - AST-based code compression
+5. **Multi-language Support** - Extend variable tracking beyond JavaScript/TypeScript
 
 ## Usage in Claude Desktop
 The enhanced memory features are now available through the standard MCP tools interface:

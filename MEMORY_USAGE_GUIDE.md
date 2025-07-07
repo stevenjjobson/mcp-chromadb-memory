@@ -271,6 +271,50 @@ Regular maintenance tasks:
 - Create project summary memory
 - Archive to separate vault if needed
 
+## 💻 Code Intelligence Features
+
+### Working with Code Memories
+
+The system now includes advanced code intelligence capabilities:
+
+#### Code-Specific Contexts
+- `code_symbol`: Function, class, and variable definitions
+- `code_pattern`: Reusable patterns and conventions
+- `code_decision`: Architecture and refactoring decisions
+- `code_snippet`: Useful code examples
+
+#### Natural Language Code Queries
+```
+"How does authentication work in this project?"
+"Find all error handling patterns"
+"Show me the database connection logic"
+"What validation methods do we use?"
+```
+
+#### Code Pattern Recognition
+The system automatically:
+- Detects common coding patterns
+- Identifies potential refactoring opportunities
+- Remembers your coding decisions
+- Suggests improvements based on past patterns
+
+#### Example Workflow
+```
+# 1. Index your codebase
+"Index the src directory for JavaScript files"
+
+# 2. Search for implementations
+"Find all API endpoint handlers"
+
+# 3. Store coding decisions
+"Remember: We use Factory pattern for all service classes"
+
+# 4. Query patterns
+"What patterns have we used for error handling?"
+```
+
+See [Code Intelligence Guide](./CODE_INTELLIGENCE_GUIDE.md) for detailed usage.
+
 ## 🎓 Pro Tips
 
 1. **Use Specific Contexts**: Don't rely only on 'general' context
@@ -278,5 +322,7 @@ Regular maintenance tasks:
 3. **Regular Summaries**: Consolidate knowledge periodically
 4. **Tag Decisions**: Make them easy to find later
 5. **Clean as You Go**: Don't let memories accumulate unnecessarily
+6. **Index Code Regularly**: Keep code memories up-to-date
+7. **Document Patterns**: Store successful patterns for reuse
 
 Remember: The memory system is designed to enhance your productivity by maintaining context across sessions. Use it actively and it will become more valuable over time!

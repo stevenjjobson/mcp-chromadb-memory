@@ -90,6 +90,11 @@ In Claude Desktop, try these commands:
 3. **Recall memories**:
    "What do you remember about my preferences?"
 
+4. **Code intelligence** (when available):
+   "Index the src directory for TypeScript files"
+   "Find all functions that handle authentication"
+   "Show me code patterns for error handling"
+
 ## Troubleshooting
 
 ### If the server doesn't appear:

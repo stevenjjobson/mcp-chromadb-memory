@@ -40,6 +40,10 @@ ChromaDB Vector Store
 Memory Management
 ├── Importance Assessment
 ├── Pattern Recognition
+├── Code Intelligence
+│   ├── Symbol Indexing
+│   ├── Pattern Detection
+│   └── Streaming Search
 ├── Consolidation Service
 └── Decay Algorithms
 ```
@@ -74,10 +78,12 @@ User Interfaces
 ## Platform Capabilities
 
 ### 1. **Multi-Modal Memory**
-- Text-based memories
-- Code snippets with syntax awareness
+- Text-based memories with context
+- Code symbols with full awareness (functions, classes, imports)
+- Symbol relationships and dependencies
 - Decision trees and rationale
 - Visual diagrams and relationships
+- Code execution patterns and performance
 - Audio/video summaries (future)
 
 ### 2. **Temporal Intelligence**
@@ -97,9 +103,11 @@ User Interfaces
 ### 4. **Adaptive Learning**
 - Reinforcement from successful outcomes
 - Pattern extraction from repetition
+- Code pattern recognition and suggestions
 - Anomaly detection for issues
 - Continuous improvement loops
 - Personalized experiences
+- Learning from Claude Code interactions
 
 ## Platform Services
 
@@ -116,6 +124,7 @@ User Interfaces
 3. **Optimization Service**: Improve performance
 4. **Learning Service**: Adapt to usage
 5. **Visualization Service**: Knowledge graphs
+6. **Code Intelligence Service**: Symbol indexing, pattern detection, streaming search
 
 ### Support Services
 1. **Backup Service**: Disaster recovery
@@ -130,7 +139,9 @@ User Interfaces
 - Obsidian vault integration
 - Git repository awareness
 - Claude Desktop connectivity
+- Claude Code optimization
 - Docker containerization
+- Streaming response system
 
 ### Planned Extensions
 - VS Code deep integration
@@ -201,23 +212,29 @@ User Interfaces
 
 ## Implementation Strategy
 
-### Phase 1: Foundation (Current)
-- Core memory management
-- Basic vault system
-- MCP integration
-- Docker deployment
+### Phase 1: Foundation (Complete)
+- Core memory management ✓
+- Basic vault system ✓
+- MCP integration ✓
+- Docker deployment ✓
 
-### Phase 2: Intelligence (Next)
+### Phase 2: Hierarchical Memory (Complete)
+- Three-tier architecture ✓
+- Automatic migration ✓
+- Enhanced search ✓
+- Token optimization ✓
+
+### Phase 3: Intelligence (Current)
+- Code intelligence integration
 - Pattern recognition
-- Predictive suggestions
-- Advanced analytics
-- Team features
+- Session enhancement
+- Claude Code optimization
 
-### Phase 3: Platform (Future)
+### Phase 4: Platform (Future)
 - Plugin marketplace
 - Cloud offerings
 - Enterprise features
-- AI assistants
+- Advanced AI assistants
 
 ## Success Metrics
 

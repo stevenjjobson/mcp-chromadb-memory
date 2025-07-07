@@ -52,7 +52,7 @@ The MCP ChromaDB Memory Server as a Cognitive State Management Platform occupies
 - **Strengths**: Code context awareness, IDE integration
 - **Weaknesses**: No persistent memory, session-limited context
 - **Pricing**: $10-19/month
-- **Our Advantage**: Persistent memory across sessions, project switching
+- **Our Advantage**: Persistent memory across sessions, project switching, streaming results
 
 #### **Tabnine**
 - **Strengths**: Code completion, team learning
@@ -66,6 +66,26 @@ The MCP ChromaDB Memory Server as a Cognitive State Management Platform occupies
 - **Pricing**: Free tier, $10/month pro
 - **Our Advantage**: Complete context capture, automatic organization
 
+### 4. Code Intelligence Tools (New Category)
+
+#### **Sourcegraph**
+- **Strengths**: Code search, navigation, batch changes
+- **Weaknesses**: Enterprise focus, no AI memory, expensive
+- **Pricing**: $49/user/month
+- **Our Advantage**: AI-integrated memory, learning from patterns, personal use
+
+#### **CodeQL (GitHub)**
+- **Strengths**: Semantic code analysis, security focus
+- **Weaknesses**: Query language learning curve, analysis only
+- **Pricing**: Free for open source, enterprise pricing
+- **Our Advantage**: Natural language queries, persistent insights, pattern learning
+
+#### **Claude Code + Our Platform**
+- **Strengths**: Command-line efficiency, AI assistance, persistent memory
+- **Weaknesses**: New integration (in development)
+- **Pricing**: Claude subscription + our platform (open source)
+- **Our Advantage**: First platform optimized for Claude Code workflows
+
 ## Competitive Advantages
 
 ### 1. **Unique Positioning**
@@ -77,24 +97,32 @@ We're the only solution that combines:
 
 ### 2. **Technical Advantages**
 
-| Feature | Our Platform | Mem0 | MemGPT | Foam | Copilot | Pieces |
-|---------|--------------|------|---------|------|----------|---------|
-| Hierarchical Memory | ✅ 3-tier | ✅ 2-tier | ✅ Virtual | ❌ | ❌ | ❌ |
-| Auto Session Capture | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Multi-Project Support | ✅ | ⚠️ Limited | ❌ | ✅ Manual | ❌ | ✅ |
-| State Preservation | ✅ | ❌ | ⚠️ Research | ❌ | ❌ | ❌ |
-| Git Integration | ✅ | ❌ | ❌ | ⚠️ Manual | ✅ | ❌ |
-| Obsidian Integration | ✅ Native | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Pattern Recognition | ✅ | ⚠️ Basic | ✅ | ❌ | ⚠️ Code only | ❌ |
-| Team Collaboration | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ |
-| Local-First Option | ✅ | ⚠️ | ✅ | ✅ | ❌ | ✅ |
-| MCP Protocol | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Feature | Our Platform | Mem0 | MemGPT | Foam | Copilot | Pieces | Sourcegraph |
+|---------|--------------|------|---------|------|----------|---------|-------------|
+| Hierarchical Memory | ✅ 3-tier | ✅ 2-tier | ✅ Virtual | ❌ | ❌ | ❌ | ❌ |
+| Auto Session Capture | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Multi-Project Support | ✅ | ⚠️ Limited | ❌ | ✅ Manual | ❌ | ✅ | ✅ |
+| State Preservation | ✅ | ❌ | ⚠️ Research | ❌ | ❌ | ❌ | ❌ |
+| Git Integration | ✅ | ❌ | ❌ | ⚠️ Manual | ✅ | ❌ | ✅ |
+| Obsidian Integration | ✅ Native | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Pattern Recognition | ✅ Code+Text | ⚠️ Basic | ✅ | ❌ | ⚠️ Code only | ❌ | ❌ |
+| Team Collaboration | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Local-First Option | ✅ | ⚠️ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| MCP Protocol | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Code Symbol Indexing | ✅ | ❌ | ❌ | ❌ | ⚠️ Session | ⚠️ Snippets | ✅ |
+| Streaming Search | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ |
+| Natural Language Code | ✅ | ❌ | ❌ | ❌ | ✅ | ⚠️ | ⚠️ |
+| Persistent Learning | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 ### 3. **Use Case Coverage**
 
 #### Solo Developer Workflow
 - **Our Solution**: Complete context preservation, automatic documentation
 - **Competitors**: Require manual note-taking or limited to code context
+
+#### Claude Code Power Users
+- **Our Solution**: Streaming results, persistent codebase memory, natural language queries
+- **Competitors**: No Claude Code optimization, session-limited context
 
 #### Team Knowledge Sharing
 - **Our Solution**: Shared vaults with role-based access, collective intelligence
@@ -107,6 +135,10 @@ We're the only solution that combines:
 #### Learning & Growth Tracking
 - **Our Solution**: Automatic pattern extraction, progress tracking
 - **Competitors**: Manual tracking or none at all
+
+#### Code Review & Refactoring
+- **Our Solution**: Pattern detection, persistent decisions, refactoring suggestions
+- **Competitors**: No memory of past decisions or patterns
 
 ## Market Opportunities
 
@@ -219,14 +251,16 @@ We're the only solution that combines:
 
 ## Competitive Positioning Statement
 
-**"The only platform that remembers everything about your development journey, preserves your complete working context, and learns from your patterns to make you a more effective developer."**
+**"The only platform that remembers everything about your development journey, preserves your complete working context, understands your code at a symbol level, and learns from your patterns to make you a more effective developer."**
 
 ### Key Differentiators
 1. **Complete Context**: Not just code, not just notes, but entire cognitive state
 2. **Automatic Capture**: No manual effort required
-3. **Intelligence**: Learns and suggests based on your patterns
-4. **Local-First**: Your data, your control, with optional sync
-5. **Platform Approach**: Extensible ecosystem, not just a tool
+3. **Code Intelligence**: Symbol-aware, streaming search, natural language queries
+4. **Persistent Learning**: Learns and suggests based on your patterns
+5. **Local-First**: Your data, your control, with optional sync
+6. **Claude Code Optimized**: First platform designed for command-line AI workflows
+7. **Platform Approach**: Extensible ecosystem, not just a tool
 
 ## Market Size Estimation
 

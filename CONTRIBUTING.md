@@ -2,11 +2,12 @@
 
 First off, thank you for considering contributing to this project! 🎉
 
-## 🚀 Platform v2.0 Development
+## 🚀 Platform v2.1 Development
 
-We're currently transforming this project into a comprehensive **Cognitive State Management Platform**. This is an exciting time to contribute! See our [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for the full vision.
+We're currently transforming this project into a comprehensive **Cognitive State Management Platform** with advanced code intelligence features. This is an exciting time to contribute! See our [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for the full vision.
 
 ### Current Focus Areas
+- Code intelligence system (symbol indexing and streaming search)
 - Hierarchical memory system (3-tier architecture)
 - Multi-project vault management
 - State capture and restoration
@@ -46,7 +47,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 ## Development Process
 
-### Working on Platform v2.0
+### Working on Platform v2.1
 
 1. **Setup your development environment**
    ```bash
@@ -54,8 +55,8 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
    cd mcp-chromadb-memory
    
    # Platform development happens on this branch
-   git checkout feature/platform-transformation
-   git pull origin feature/platform-transformation
+   git checkout feature/platform-foundation
+   git pull origin feature/platform-foundation
    
    npm install
    ```
