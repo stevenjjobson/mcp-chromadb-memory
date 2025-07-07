@@ -12,6 +12,7 @@ interface Memory {
   metadata: Record<string, any>;
   accessCount: number;
   lastAccessed: string;
+  tier?: 'working' | 'session' | 'longterm'; // Added tier tracking
 }
 
 interface MemoryScore {
@@ -29,11 +30,28 @@ interface ExactSearchIndex {
   memoryCache: Map<string, Memory>; // id -> memory
 }
 
+type TierName = 'working' | 'session' | 'longterm';
+
+interface TierConfig {
+  name: TierName;
+  retention: number; // Hours
+  maxSize: number;
+  importanceThreshold: number;
+}
+
+interface TierCollections {
+  working?: any;
+  session?: any;
+  longterm?: any;
+}
+
 export class EnhancedMemoryManager {
   private client: ChromaClient;
-  private collection: any;
+  private collection: any; // Main collection for backward compatibility
+  private tierCollections: TierCollections = {};
   private openai: OpenAI;
   private exactIndex: ExactSearchIndex;
+  private tierConfigs: Map<TierName, TierConfig> = new Map();
   
   constructor(private config: Config) {
     const chromaUrl = `http://${config.chromaHost}:${config.chromaPort}`;
@@ -57,13 +75,12 @@ export class EnhancedMemoryManager {
   }
   
   async initialize(): Promise<void> {
-    // Safety check for production
-    if (this.config.environment === 'PRODUCTION' && this.config.tierEnabled) {
-      throw new Error('🚨 TIERS CANNOT BE ENABLED IN PRODUCTION YET! Please test in DEVELOPMENT first.');
-    }
-    
     if (this.config.isDevelopment) {
       console.warn('🧪 Running in DEVELOPMENT mode - changes are isolated from production');
+    }
+    
+    if (this.config.environment === 'PRODUCTION' && this.config.tierEnabled) {
+      console.warn('⚠️  Hierarchical tiers are now enabled in PRODUCTION');
     }
     
     try {
@@ -101,6 +118,11 @@ export class EnhancedMemoryManager {
       
       console.error(`Connected to ChromaDB collection: ${this.config.memoryCollectionName}`);
       
+      // Initialize tiers if enabled
+      if (this.config.tierEnabled && this.config.tierConfig) {
+        await this.initializeTiers();
+      }
+      
       // Build exact search index from existing memories
       await this.rebuildExactIndex();
     } catch (error) {
@@ -127,40 +149,172 @@ export class EnhancedMemoryManager {
     return response.data[0].embedding;
   }
   
+  // Initialize tier collections
+  private async initializeTiers(): Promise<void> {
+    console.error('🔄 Initializing hierarchical memory tiers...');
+    
+    const tierConfig = this.config.tierConfig!;
+    
+    // Configure tier settings
+    this.tierConfigs.set('working', {
+      name: 'working',
+      retention: tierConfig.workingRetention,
+      maxSize: tierConfig.workingMaxSize,
+      importanceThreshold: 0.5
+    });
+    
+    this.tierConfigs.set('session', {
+      name: 'session',
+      retention: tierConfig.sessionRetention,
+      maxSize: tierConfig.sessionMaxSize,
+      importanceThreshold: 0.3
+    });
+    
+    this.tierConfigs.set('longterm', {
+      name: 'longterm',
+      retention: tierConfig.longTermRetention,
+      maxSize: tierConfig.longTermMaxSize,
+      importanceThreshold: 0.1
+    });
+    
+    // Create tier collections
+    for (const [tierName, config] of this.tierConfigs) {
+      const collectionName = `${this.config.memoryCollectionName}_${tierName}`;
+      
+      try {
+        this.tierCollections[tierName] = await this.client.getOrCreateCollection({
+          name: collectionName,
+          embeddingFunction: {
+            generate: async (texts: string[]) => {
+              const embeddings = await Promise.all(
+                texts.map(text => this.generateEmbedding(text))
+              );
+              return embeddings;
+            }
+          },
+          metadata: {
+            "hnsw:space": "cosine",
+            "hnsw:construction_ef": 200,
+            "hnsw:M": 32,
+            "tier": tierName,
+            "retention": config.retention,
+            "maxSize": config.maxSize
+          }
+        });
+        
+        console.error(`✅ Created tier collection: ${collectionName}`);
+      } catch (error) {
+        console.error(`❌ Failed to create tier ${tierName}:`, error);
+        throw error;
+      }
+    }
+    
+    console.error('✅ Hierarchical memory tiers initialized');
+  }
+  
+  // Determine which tier a memory should belong to
+  private determineTier(memory: Memory): TierName {
+    if (!this.config.tierEnabled) {
+      return 'working'; // Default tier when not enabled
+    }
+    
+    const now = Date.now();
+    const ageInHours = (now - new Date(memory.timestamp).getTime()) / (1000 * 60 * 60);
+    const tierConfig = this.config.tierConfig!;
+    
+    // Consider both age and access patterns
+    const accessScore = this.calculateFrequencyScore(memory.accessCount);
+    
+    // Working tier: Recent OR frequently accessed
+    if (ageInHours < tierConfig.workingRetention || accessScore > 0.7) {
+      return 'working';
+    }
+    
+    // Session tier: Moderately aged with some access
+    if (ageInHours < tierConfig.sessionRetention || accessScore > 0.3) {
+      return 'session';
+    }
+    
+    // Long-term tier: Everything else
+    return 'longterm';
+  }
+  
+  // Get the appropriate collection for a tier
+  private getTierCollection(tier: TierName): any {
+    if (!this.config.tierEnabled) {
+      return this.collection; // Use main collection when tiers disabled
+    }
+    
+    return this.tierCollections[tier] || this.collection;
+  }
+  
   // Build exact search index from ChromaDB
   private async rebuildExactIndex(): Promise<void> {
     console.error('Building exact search index...');
-    
-    // Get all memories from ChromaDB
-    const allMemories = await this.collection.get();
-    
-    if (!allMemories.documents || allMemories.documents.length === 0) {
-      console.error('No memories to index');
-      return;
-    }
     
     // Clear existing indexes
     this.exactIndex.contentIndex.clear();
     this.exactIndex.metadataIndex.clear();
     this.exactIndex.memoryCache.clear();
     
-    // Index each memory
-    for (let i = 0; i < allMemories.documents.length; i++) {
-      const memory: Memory = {
-        id: allMemories.ids[i],
-        content: allMemories.documents[i],
-        context: allMemories.metadatas[i]?.context || 'unknown',
-        importance: allMemories.metadatas[i]?.importance || 0.5,
-        timestamp: allMemories.metadatas[i]?.timestamp || new Date().toISOString(),
-        metadata: allMemories.metadatas[i] || {},
-        accessCount: allMemories.metadatas[i]?.accessCount || 0,
-        lastAccessed: allMemories.metadatas[i]?.lastAccessed || allMemories.metadatas[i]?.timestamp
-      };
+    let totalIndexed = 0;
+    
+    if (this.config.tierEnabled) {
+      // Index memories from all tiers
+      for (const [tierName, collection] of Object.entries(this.tierCollections)) {
+        if (!collection) continue;
+        
+        const tierMemories = await collection.get();
+        if (!tierMemories.documents || tierMemories.documents.length === 0) {
+          console.error(`No memories in ${tierName} tier`);
+          continue;
+        }
+        
+        // Index each memory from this tier
+        for (let i = 0; i < tierMemories.documents.length; i++) {
+          const memory: Memory = {
+            id: tierMemories.ids[i],
+            content: tierMemories.documents[i],
+            context: tierMemories.metadatas[i]?.context || 'unknown',
+            importance: tierMemories.metadatas[i]?.importance || 0.5,
+            timestamp: tierMemories.metadatas[i]?.timestamp || new Date().toISOString(),
+            metadata: tierMemories.metadatas[i] || {},
+            accessCount: tierMemories.metadatas[i]?.accessCount || 0,
+            lastAccessed: tierMemories.metadatas[i]?.lastAccessed || tierMemories.metadatas[i]?.timestamp,
+            tier: tierName as TierName
+          };
+          
+          this.indexMemory(memory);
+          totalIndexed++;
+        }
+        
+        console.error(`Indexed ${tierMemories.documents.length} memories from ${tierName} tier`);
+      }
+    } else {
+      // Index from main collection (backward compatibility)
+      const allMemories = await this.collection.get();
       
-      this.indexMemory(memory);
+      if (allMemories.documents && allMemories.documents.length > 0) {
+        // Index each memory
+        for (let i = 0; i < allMemories.documents.length; i++) {
+          const memory: Memory = {
+            id: allMemories.ids[i],
+            content: allMemories.documents[i],
+            context: allMemories.metadatas[i]?.context || 'unknown',
+            importance: allMemories.metadatas[i]?.importance || 0.5,
+            timestamp: allMemories.metadatas[i]?.timestamp || new Date().toISOString(),
+            metadata: allMemories.metadatas[i] || {},
+            accessCount: allMemories.metadatas[i]?.accessCount || 0,
+            lastAccessed: allMemories.metadatas[i]?.lastAccessed || allMemories.metadatas[i]?.timestamp
+          };
+          
+          this.indexMemory(memory);
+          totalIndexed++;
+        }
+      }
     }
     
-    console.error(`Indexed ${allMemories.documents.length} memories for exact search`);
+    console.error(`Total indexed ${totalIndexed} memories for exact search`);
   }
   
   // Index a single memory for exact search
@@ -257,18 +411,7 @@ export class EnhancedMemoryManager {
     
     // Update access patterns
     for (const memory of results) {
-      memory.accessCount++;
-      memory.lastAccessed = new Date().toISOString();
-      
-      // Update in ChromaDB
-      await this.collection.update({
-        ids: [memory.id],
-        metadatas: [{
-          ...memory.metadata,
-          accessCount: memory.accessCount,
-          lastAccessed: memory.lastAccessed
-        }]
-      });
+      await this.updateMemoryAccess(memory.id, memory.tier);
     }
     
     return results;
@@ -293,73 +436,175 @@ export class EnhancedMemoryManager {
       // Generate query embedding
       const queryEmbedding = await this.generateEmbedding(query);
       
-      // Query ChromaDB with extra results for reranking
-      const results = await this.collection.query({
-        queryEmbeddings: [queryEmbedding],
-        nResults: Math.min(limit * 2, 20), // Cap at 20 for performance
-        where: whereClause
-      });
-      
-      if (!results.documents[0] || results.documents[0].length === 0) {
-        console.error('No memories found for query:', query);
-        return [];
-      }
-      
-      // Calculate multi-factor scores
-      const currentTime = Date.now();
-      const scoredMemories: MemoryScore[] = [];
-      
-      for (let i = 0; i < results.documents[0].length; i++) {
-        const metadata = results.metadatas[0][i];
-        const memory: Memory = {
-          id: results.ids[0][i],
-          content: results.documents[0][i],
-          context: metadata.context || 'unknown',
-          importance: metadata.importance || 0.5,
-          timestamp: metadata.timestamp || new Date().toISOString(),
-          metadata: metadata,
-          accessCount: metadata.accessCount || 0,
-          lastAccessed: metadata.lastAccessed || metadata.timestamp
-        };
+      if (this.config.tierEnabled) {
+        // Query across all tiers
+        const tiersToQuery = this.selectTiersForQuery(query, context);
+        const allResults: MemoryScore[] = [];
         
-        // Calculate component scores
-        const semanticScore = 1 - (results.distances[0][i] || 0);
-        const recencyScore = this.calculateRecencyScore(memory.timestamp, currentTime);
-        const importanceScore = memory.importance;
-        const frequencyScore = this.calculateFrequencyScore(memory.accessCount);
+        for (const tier of tiersToQuery) {
+          const collection = this.getTierCollection(tier);
+          if (!collection) continue;
+          
+          // Query this tier
+          const results = await collection.query({
+            queryEmbeddings: [queryEmbedding],
+            nResults: Math.min(limit, 10), // Limit per tier
+            where: whereClause
+          });
+          
+          if (results.documents[0] && results.documents[0].length > 0) {
+            // Process results from this tier
+            for (let i = 0; i < results.documents[0].length; i++) {
+              const metadata = results.metadatas[0][i];
+              const memory: Memory = {
+                id: results.ids[0][i],
+                content: results.documents[0][i],
+                context: metadata.context || 'unknown',
+                importance: metadata.importance || 0.5,
+                timestamp: metadata.timestamp || new Date().toISOString(),
+                metadata: metadata,
+                accessCount: metadata.accessCount || 0,
+                lastAccessed: metadata.lastAccessed || metadata.timestamp,
+                tier: tier
+              };
+              
+              // Calculate component scores
+              const semanticScore = 1 - (results.distances[0][i] || 0);
+              const recencyScore = this.calculateRecencyScore(memory.timestamp, Date.now());
+              const importanceScore = memory.importance;
+              const frequencyScore = this.calculateFrequencyScore(memory.accessCount);
+              
+              // Add tier bonus (working tier gets slight preference)
+              const tierBonus = tier === 'working' ? 0.1 : (tier === 'session' ? 0.05 : 0);
+              
+              // Calculate weighted total score
+              const totalScore = (
+                semanticScore * 0.4 +
+                recencyScore * 0.3 +
+                importanceScore * 0.2 +
+                frequencyScore * 0.1 +
+                tierBonus
+              );
+              
+              allResults.push({
+                memory,
+                semanticScore,
+                recencyScore,
+                importanceScore,
+                frequencyScore,
+                totalScore
+              });
+            }
+          }
+        }
         
-        // Calculate weighted total score
-        const totalScore = (
-          semanticScore * 0.4 +
-          recencyScore * 0.3 +
-          importanceScore * 0.2 +
-          frequencyScore * 0.1
-        );
+        // Sort all results by total score and return top results
+        allResults.sort((a, b) => b.totalScore - a.totalScore);
+        const returnedMemories = allResults.slice(0, limit);
         
-        scoredMemories.push({
-          memory,
-          semanticScore,
-          recencyScore,
-          importanceScore,
-          frequencyScore,
-          totalScore
+        // Update access patterns
+        for (const scoredMemory of returnedMemories) {
+          await this.updateMemoryAccess(scoredMemory.memory.id, scoredMemory.memory.tier);
+        }
+        
+        return returnedMemories;
+      } else {
+        // Single collection query (backward compatibility)
+        const results = await this.collection.query({
+          queryEmbeddings: [queryEmbedding],
+          nResults: Math.min(limit * 2, 20),
+          where: whereClause
         });
+        
+        if (!results.documents[0] || results.documents[0].length === 0) {
+          console.error('No memories found for query:', query);
+          return [];
+        }
+        
+        // Calculate multi-factor scores
+        const currentTime = Date.now();
+        const scoredMemories: MemoryScore[] = [];
+        
+        for (let i = 0; i < results.documents[0].length; i++) {
+          const metadata = results.metadatas[0][i];
+          const memory: Memory = {
+            id: results.ids[0][i],
+            content: results.documents[0][i],
+            context: metadata.context || 'unknown',
+            importance: metadata.importance || 0.5,
+            timestamp: metadata.timestamp || new Date().toISOString(),
+            metadata: metadata,
+            accessCount: metadata.accessCount || 0,
+            lastAccessed: metadata.lastAccessed || metadata.timestamp
+          };
+          
+          // Calculate component scores
+          const semanticScore = 1 - (results.distances[0][i] || 0);
+          const recencyScore = this.calculateRecencyScore(memory.timestamp, currentTime);
+          const importanceScore = memory.importance;
+          const frequencyScore = this.calculateFrequencyScore(memory.accessCount);
+          
+          // Calculate weighted total score
+          const totalScore = (
+            semanticScore * 0.4 +
+            recencyScore * 0.3 +
+            importanceScore * 0.2 +
+            frequencyScore * 0.1
+          );
+          
+          scoredMemories.push({
+            memory,
+            semanticScore,
+            recencyScore,
+            importanceScore,
+            frequencyScore,
+            totalScore
+          });
+        }
+        
+        // Sort by total score and return top results
+        scoredMemories.sort((a, b) => b.totalScore - a.totalScore);
+        
+        // Update access patterns for returned memories
+        const returnedMemories = scoredMemories.slice(0, limit);
+        for (const scoredMemory of returnedMemories) {
+          await this.updateMemoryAccess(scoredMemory.memory.id);
+        }
+        
+        return returnedMemories;
       }
-      
-      // Sort by total score and return top results
-      scoredMemories.sort((a, b) => b.totalScore - a.totalScore);
-      
-      // Update access patterns for returned memories
-      const returnedMemories = scoredMemories.slice(0, limit);
-      for (const scoredMemory of returnedMemories) {
-        await this.updateMemoryAccess(scoredMemory.memory.id);
-      }
-      
-      return returnedMemories;
     } catch (error) {
       console.error('Error in semantic search:', error);
       throw error;
     }
+  }
+  
+  // Select which tiers to query based on context
+  private selectTiersForQuery(query: string, context?: string): TierName[] {
+    // Default: query all tiers, prioritizing working
+    let tiers: TierName[] = ['working', 'session', 'longterm'];
+    
+    // Optimize based on query patterns
+    const lowerQuery = query.toLowerCase();
+    
+    // Recent queries focus on working/session
+    if (lowerQuery.includes('recent') || lowerQuery.includes('today') || 
+        lowerQuery.includes('latest') || lowerQuery.includes('current')) {
+      tiers = ['working', 'session'];
+    }
+    
+    // Historical queries include all tiers
+    else if (lowerQuery.includes('history') || lowerQuery.includes('past') ||
+             lowerQuery.includes('old') || lowerQuery.includes('archive')) {
+      tiers = ['longterm', 'session', 'working'];
+    }
+    
+    // Task-critical context prioritizes working memory
+    else if (context === 'task_critical') {
+      tiers = ['working', 'session'];
+    }
+    
+    return tiers;
   }
   
   // Hybrid search combining exact and semantic
@@ -431,7 +676,7 @@ export class EnhancedMemoryManager {
     content: string,
     context: string = 'general',
     metadata: Record<string, any> = {}
-  ): Promise<{ stored: boolean; id?: string; importance?: number }> {
+  ): Promise<{ stored: boolean; id?: string; importance?: number; tier?: TierName }> {
     try {
       // Assess importance
       const importance = await this.assessImportance(content, context);
@@ -455,14 +700,7 @@ export class EnhancedMemoryManager {
         lastAccessed: timestamp
       };
       
-      // Store in ChromaDB
-      await this.collection.add({
-        ids: [id],
-        documents: [content],
-        metadatas: [fullMetadata]
-      });
-      
-      // Index for exact search
+      // Create memory object
       const memory: Memory = {
         id,
         content,
@@ -473,11 +711,30 @@ export class EnhancedMemoryManager {
         accessCount: 0,
         lastAccessed: timestamp
       };
+      
+      // Determine tier and get appropriate collection
+      const tier = this.determineTier(memory);
+      const collection = this.getTierCollection(tier);
+      memory.tier = tier;
+      
+      // Add tier to metadata if tiers are enabled
+      if (this.config.tierEnabled) {
+        (fullMetadata as any).tier = tier;
+      }
+      
+      // Store in appropriate collection
+      await collection.add({
+        ids: [id],
+        documents: [content],
+        metadatas: [fullMetadata]
+      });
+      
+      // Index for exact search
       this.indexMemory(memory);
       
-      console.error(`Stored memory ${id} with importance ${importance}`);
+      console.error(`Stored memory ${id} with importance ${importance} in ${tier} tier`);
       
-      return { stored: true, id, importance };
+      return { stored: true, id, importance, tier };
     } catch (error) {
       console.error('Error storing memory:', error);
       throw error;
@@ -502,10 +759,23 @@ export class EnhancedMemoryManager {
     return Math.min(1, Math.log10(accessCount + 1) / 2);
   }
   
-  private async updateMemoryAccess(memoryId: string): Promise<void> {
+  private async updateMemoryAccess(memoryId: string, tier?: TierName): Promise<void> {
     try {
+      // Determine which collection to update
+      let collection = this.collection;
+      
+      if (this.config.tierEnabled && tier) {
+        collection = this.getTierCollection(tier);
+      } else if (this.config.tierEnabled) {
+        // Try to find which tier contains this memory
+        const memory = this.exactIndex.memoryCache.get(memoryId);
+        if (memory && memory.tier) {
+          collection = this.getTierCollection(memory.tier);
+        }
+      }
+      
       // Get current metadata
-      const result = await this.collection.get({
+      const result = await collection.get({
         ids: [memoryId]
       });
       
@@ -515,7 +785,7 @@ export class EnhancedMemoryManager {
         const newLastAccessed = new Date().toISOString();
         
         // Update in ChromaDB
-        await this.collection.update({
+        await collection.update({
           ids: [memoryId],
           metadatas: [{
             ...metadata,
@@ -529,6 +799,15 @@ export class EnhancedMemoryManager {
         if (memory) {
           memory.accessCount = newAccessCount;
           memory.lastAccessed = newLastAccessed;
+          
+          // Check if memory should be migrated to a different tier
+          if (this.config.tierEnabled && tier) {
+            const newTier = this.determineTier(memory);
+            if (newTier !== tier) {
+              // Memory needs migration (will be handled by migration service)
+              console.error(`Memory ${memoryId} should migrate from ${tier} to ${newTier}`);
+            }
+          }
         }
       }
     } catch (error) {
@@ -813,5 +1092,138 @@ export class EnhancedMemoryManager {
   async updateAccessCount(memoryId: string): Promise<void> {
     // This is handled internally by updateMemoryAccess
     await this.updateMemoryAccess(memoryId);
+  }
+  
+  // Tier management methods
+  async getTierStats(): Promise<Record<TierName, { count: number; oldestMemory?: Date; newestMemory?: Date }>> {
+    const stats: Record<TierName, { count: number; oldestMemory?: Date; newestMemory?: Date }> = {
+      working: { count: 0 },
+      session: { count: 0 },
+      longterm: { count: 0 }
+    };
+    
+    if (!this.config.tierEnabled) {
+      // Return stats from main collection
+      const allMemories = await this.collection.get();
+      stats.working.count = allMemories.ids?.length || 0;
+      return stats;
+    }
+    
+    // Get stats for each tier
+    for (const [tierName, collection] of Object.entries(this.tierCollections)) {
+      if (!collection) continue;
+      
+      const tierMemories = await collection.get();
+      if (tierMemories.ids && tierMemories.ids.length > 0) {
+        stats[tierName as TierName].count = tierMemories.ids.length;
+        
+        // Find oldest and newest
+        let oldest = new Date();
+        let newest = new Date(0);
+        
+        for (const metadata of tierMemories.metadatas) {
+          const timestamp = new Date(metadata.timestamp);
+          if (timestamp < oldest) oldest = timestamp;
+          if (timestamp > newest) newest = timestamp;
+        }
+        
+        stats[tierName as TierName].oldestMemory = oldest;
+        stats[tierName as TierName].newestMemory = newest;
+      }
+    }
+    
+    return stats;
+  }
+  
+  // Migrate a memory between tiers
+  async migrateMemory(memoryId: string, fromTier: TierName, toTier: TierName): Promise<boolean> {
+    if (!this.config.tierEnabled) {
+      console.error('Tier migration requires tiers to be enabled');
+      return false;
+    }
+    
+    try {
+      const fromCollection = this.getTierCollection(fromTier);
+      const toCollection = this.getTierCollection(toTier);
+      
+      // Get the memory from source tier
+      const result = await fromCollection.get({
+        ids: [memoryId]
+      });
+      
+      if (!result.ids || result.ids.length === 0) {
+        console.error(`Memory ${memoryId} not found in ${fromTier} tier`);
+        return false;
+      }
+      
+      // Add to destination tier
+      await toCollection.add({
+        ids: result.ids,
+        documents: result.documents,
+        metadatas: result.metadatas.map((m: any) => ({ ...m, tier: toTier }))
+      });
+      
+      // Delete from source tier
+      await fromCollection.delete({
+        ids: [memoryId]
+      });
+      
+      // Update cache
+      const memory = this.exactIndex.memoryCache.get(memoryId);
+      if (memory) {
+        memory.tier = toTier;
+      }
+      
+      console.error(`Migrated memory ${memoryId} from ${fromTier} to ${toTier}`);
+      return true;
+    } catch (error) {
+      console.error(`Error migrating memory ${memoryId}:`, error);
+      return false;
+    }
+  }
+  
+  // Get memories that need migration
+  async getMemoriesForMigration(): Promise<Array<{ memory: Memory; currentTier: TierName; targetTier: TierName }>> {
+    const migrations: Array<{ memory: Memory; currentTier: TierName; targetTier: TierName }> = [];
+    
+    if (!this.config.tierEnabled) {
+      return migrations;
+    }
+    
+    // Check each tier for memories that should be migrated
+    for (const [tierName, collection] of Object.entries(this.tierCollections)) {
+      if (!collection) continue;
+      
+      const currentTier = tierName as TierName;
+      const tierMemories = await collection.get();
+      
+      if (tierMemories.ids && tierMemories.ids.length > 0) {
+        for (let i = 0; i < tierMemories.ids.length; i++) {
+          const memory: Memory = {
+            id: tierMemories.ids[i],
+            content: tierMemories.documents[i],
+            context: tierMemories.metadatas[i]?.context || 'unknown',
+            importance: tierMemories.metadatas[i]?.importance || 0.5,
+            timestamp: tierMemories.metadatas[i]?.timestamp || new Date().toISOString(),
+            metadata: tierMemories.metadatas[i] || {},
+            accessCount: tierMemories.metadatas[i]?.accessCount || 0,
+            lastAccessed: tierMemories.metadatas[i]?.lastAccessed || tierMemories.metadatas[i]?.timestamp,
+            tier: currentTier
+          };
+          
+          const targetTier = this.determineTier(memory);
+          
+          if (targetTier !== currentTier) {
+            migrations.push({
+              memory,
+              currentTier,
+              targetTier
+            });
+          }
+        }
+      }
+    }
+    
+    return migrations;
   }
 }

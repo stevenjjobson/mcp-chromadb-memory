@@ -32,6 +32,7 @@ import { VaultStructureManager } from './vault-structure-manager.js';
 import { VaultIndexService } from './services/vault-index-service.js';
 import { MemoryHealthMonitor } from './services/memory-health-monitor.js';
 import { VaultFileWatcher } from './services/vault-file-watcher.js';
+import { MigrationService } from './services/migration-service.js';
 import { 
   StartupSummary, 
   SystemHealthSummary, 
@@ -78,6 +79,7 @@ let structureManager: VaultStructureManager | null = null;
 let vaultIndexService: VaultIndexService | null = null;
 let memoryHealthMonitor: MemoryHealthMonitor | null = null;
 let vaultFileWatcher: VaultFileWatcher | null = null;
+let migrationService: MigrationService | null = null;
 
 // Update the tools list in ListToolsRequestSchema handler
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -658,6 +660,31 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'analyze_access_patterns',
         description: 'Analyze memory access patterns and get tier recommendations',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        },
+      },
+      // Tier management tools
+      {
+        name: 'get_tier_stats',
+        description: 'Get statistics for each memory tier',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        },
+      },
+      {
+        name: 'run_migration',
+        description: 'Manually run memory tier migration',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        },
+      },
+      {
+        name: 'get_migration_status',
+        description: 'Get the status of the migration service',
         inputSchema: {
           type: 'object',
           properties: {}
@@ -1691,6 +1718,72 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
       
+      // Tier management tools
+      case 'get_tier_stats': {
+        if (!config.tierEnabled) {
+          throw new Error('Tier management is not enabled');
+        }
+        const stats = await memoryManager.getTierStats();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                stats: Object.entries(stats).map(([tier, data]) => ({
+                  tier,
+                  count: data.count,
+                  oldestMemory: data.oldestMemory,
+                  newestMemory: data.newestMemory
+                }))
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'run_migration': {
+        if (!migrationService) {
+          throw new Error('Migration service not initialized');
+        }
+        const report = await migrationService.runMigration();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                report: {
+                  startTime: report.startTime,
+                  endTime: report.endTime,
+                  totalMigrated: report.totalMigrated,
+                  migrations: report.migrations,
+                  errors: report.errors
+                }
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'get_migration_status': {
+        if (!migrationService) {
+          throw new Error('Migration service not initialized');
+        }
+        const status = migrationService.getStatus();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                status
+              }, null, 2)
+            }
+          ]
+        };
+      }
+      
       // Vault management tools
       case 'register_vault': {
         if (!vaultManager) {
@@ -1943,6 +2036,10 @@ process.on('SIGINT', async () => {
     }
   }
   
+  if (migrationService) {
+    await migrationService.stop();
+  }
+  
   if (vaultFileWatcher) {
     await vaultFileWatcher.stop();
   }
@@ -2166,6 +2263,13 @@ async function main() {
     // Initialize memory pattern service
     memoryPatternService = new MemoryPatternService(memoryManager);
     console.error('Memory pattern service initialized');
+    
+    // Initialize migration service if tiers are enabled
+    if (config.tierEnabled) {
+      migrationService = new MigrationService(memoryManager, config);
+      await migrationService.start();
+      console.error('Migration service started');
+    }
     
     // Initialize Obsidian manager if vault path is configured
     const vaultPath = process.env.OBSIDIAN_VAULT_PATH;

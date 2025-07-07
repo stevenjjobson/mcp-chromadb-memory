@@ -32,4 +32,15 @@ echo ""
 
 # Run with development configuration
 export ENVIRONMENT_NAME=DEVELOPMENT
+
+# Load OpenAI API key from secrets if available
+if [ -f ./secrets/openai_api_key.txt ]; then
+    export OPENAI_API_KEY=$(cat ./secrets/openai_api_key.txt)
+    echo -e "${GREEN}✅ Loaded OpenAI API key from secrets${NC}"
+else
+    echo -e "${RED}❌ OpenAI API key not found in ./secrets/openai_api_key.txt${NC}"
+    echo -e "${YELLOW}Please create the file with your API key${NC}"
+    exit 1
+fi
+
 npm run dev

@@ -48,11 +48,11 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 - 🏗️ **Hierarchical Vault Structure** - Universal Developer Documentation System with automated folder generation and hooks
 - 🏥 **Health Monitoring** - Real-time system health checks with visual dashboard and startup verification
 - 📊 **Vault Index** - Comprehensive vault statistics and navigation system with automatic updates
-
-#### Platform Enhancements (Coming Soon)
 - 🏗️ **Hierarchical Memory System** - Three-tier architecture (Working, Session, Long-term) with automatic migration
 - 🔄 **Vault Management** - Multi-project support with instant context switching
 - 💾 **State Capture** - Save and restore complete working context across devices
+
+#### Platform Enhancements (Coming Soon)
 - 🧬 **Pattern Recognition** - Learn from development patterns and suggest solutions
 - 🔄 **Memory Consolidation** - Intelligent deduplication and memory merging
 - 🔀 **Git Integration** - Link memories to commits, branches, and pull requests
@@ -426,6 +426,48 @@ Apply hooks to existing folders for automated actions.
 ```
 
 See [Hierarchical Vault Structure System](./Project_Context/Hierarchical%20Vault%20Structure%20System.md) for complete documentation.
+
+### Hierarchical Memory System
+
+The platform now features a sophisticated three-tier memory architecture that automatically manages memory lifecycle:
+
+#### Memory Tiers
+
+1. **Working Memory** (48 hours)
+   - Stores immediate context and active tasks
+   - Fastest retrieval speed
+   - Automatically migrates older memories to Session tier
+
+2. **Session Memory** (14 days)
+   - Contains recent development sessions
+   - Balanced performance and retention
+   - Migrates important memories to Long-term tier
+
+3. **Long-term Memory** (Permanent)
+   - Preserves critical knowledge and patterns
+   - Optimized for important information
+   - Never expires
+
+#### Tier Management Tools
+
+- `get_tier_stats` - View memory distribution across tiers
+- `analyze_access_patterns` - Get recommendations for tier optimization
+- `get_memories_for_migration` - Preview pending tier migrations
+
+#### Configuration
+
+Configure tier behavior in your `.env`:
+
+```env
+# Tier Configuration
+TIER_ENABLED=true
+TIER_WORKING_RETENTION=48      # Hours
+TIER_SESSION_RETENTION=336     # Hours (14 days)
+TIER_LONGTERM_RETENTION=8760   # Hours (1 year)
+TIER_MIGRATION_INTERVAL=3600000 # Milliseconds (1 hour)
+```
+
+The migration service runs automatically in the background, moving memories between tiers based on age and access patterns.
 
 ## 🏗️ Architecture
 

@@ -80,11 +80,11 @@ If automatic logging is not enabled, you should:
 
 ## Platform Transformation Status
 
-**Current Version**: 1.5 (Enhanced memory server with dual-instance development)
-**Target Version**: 2.0 (Cognitive State Management Platform)
+**Current Version**: 2.0 (Cognitive State Management Platform)
+**Status**: Phase 2 Complete - Hierarchical Memory System Deployed
 
 See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for the 20-day transformation plan.
-See [Development Status](./Project_Context/DEVELOPMENT_STATUS.md) for current progress.
+See [Development Status](./DEVELOPMENT_STATUS.md) for detailed progress.
 
 ### Key Platform Features
 1. **Vault Management** (Implemented): Multi-project support with hot-swapping
@@ -102,7 +102,11 @@ See [Development Status](./Project_Context/DEVELOPMENT_STATUS.md) for current pr
    - Hybrid search combining exact and semantic
    - Token compression (50-90% reduction)
    - Access pattern tracking
-4. **Hierarchical Memory System** (Upcoming): Three-tier architecture for optimal performance
+4. **Hierarchical Memory System** (Implemented): Three-tier architecture for optimal performance
+   - Working tier (48h) for immediate context
+   - Session tier (14d) for recent development
+   - Long-term tier (permanent) for critical knowledge
+   - Automatic migration between tiers
 5. **Pattern Recognition** (Upcoming): Learning from development patterns
 6. **Background Services** (Upcoming): Automatic optimization and maintenance
 
@@ -170,6 +174,11 @@ See [Development Status](./Project_Context/DEVELOPMENT_STATUS.md) for current pr
 - `list_states` - List available captured states
 - `diff_states` - Compare two captured states
 
+**Tier Management Tools:**
+- `get_tier_stats` - View memory distribution and statistics across all tiers
+- `analyze_access_patterns` - Get tier recommendations based on memory usage
+- `get_memories_for_migration` - Preview memories pending tier migration
+
 ## Development Commands
 
 ### Build and Run
@@ -196,6 +205,11 @@ npm run docker:build
 
 # Run in Docker
 npm run docker:run
+
+# For dual-instance development
+./scripts/env-manager.sh start-dev  # Start development environment
+./scripts/env-manager.sh stop-dev   # Stop development environment
+./scripts/env-manager.sh status     # Check status of both environments
 ```
 
 ### Starting ChromaDB
