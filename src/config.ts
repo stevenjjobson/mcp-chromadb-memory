@@ -19,7 +19,7 @@ process.stdout.write = originalWrite;
 // Log which environment was loaded
 console.error(`Loading configuration from: ${envFile}`);
 
-// Helper function to read from Docker secrets or environment variables
+// Helper function to read from Docker secrets, local secrets folder, or environment variables
 function getSecret(secretName: string, envVar: string): string | undefined {
   // First, try to read from Docker secret file
   const secretPath = `/run/secrets/${secretName}`;
@@ -28,6 +28,16 @@ function getSecret(secretName: string, envVar: string): string | undefined {
       return fs.readFileSync(secretPath, 'utf-8').trim();
     } catch (error) {
       console.error(`Failed to read secret from ${secretPath}:`, error);
+    }
+  }
+  
+  // Second, try to read from local secrets folder (for development)
+  const localSecretPath = path.resolve(process.cwd(), 'secrets', `${secretName}.txt`);
+  if (fs.existsSync(localSecretPath)) {
+    try {
+      return fs.readFileSync(localSecretPath, 'utf-8').trim();
+    } catch (error) {
+      console.error(`Failed to read secret from ${localSecretPath}:`, error);
     }
   }
   
@@ -61,6 +71,22 @@ const ConfigSchema = z.object({
   tierEnabled: z.boolean().default(false),
   consolidationEnabled: z.boolean().default(false),
   patternRecognitionEnabled: z.boolean().default(false),
+  
+  // Code Intelligence configuration
+  codeIndexingEnabled: z.boolean().default(false),
+  codeIndexingPatterns: z.string().default('**/*.{js,ts,py,java,go,rs,cpp}'),
+  codeIndexingExclude: z.string().default('**/node_modules/**,**/dist/**,**/.git/**'),
+  codePatternDetection: z.boolean().default(false),
+  codeStreamingEnabled: z.boolean().default(true),
+  codeCacheSize: z.number().default(1000),
+  codeSymbolContextLines: z.number().default(15),
+  
+  // Batch and rate limiting configuration
+  batchSize: z.number().default(100),
+  batchDelayMs: z.number().default(200),
+  maxConcurrentBatches: z.number().default(3),
+  retryAttempts: z.number().default(3),
+  retryDelayMs: z.number().default(1000),
   
   // Tier configuration (only used if tierEnabled)
   tierConfig: z.object({
@@ -104,6 +130,22 @@ export const config = ConfigSchema.parse({
   consolidationEnabled: process.env.CONSOLIDATION_ENABLED === 'true',
   patternRecognitionEnabled: process.env.PATTERN_RECOGNITION_ENABLED === 'true',
   
+  // Code Intelligence configuration
+  codeIndexingEnabled: process.env.CODE_INDEXING_ENABLED === 'true',
+  codeIndexingPatterns: process.env.CODE_INDEXING_PATTERNS || '**/*.{js,ts,py,java,go,rs,cpp}',
+  codeIndexingExclude: process.env.CODE_INDEXING_EXCLUDE || '**/node_modules/**,**/dist/**,**/.git/**',
+  codePatternDetection: process.env.CODE_PATTERN_DETECTION === 'true',
+  codeStreamingEnabled: process.env.CODE_STREAMING_ENABLED !== 'false',
+  codeCacheSize: parseInt(process.env.CODE_CACHE_SIZE || '1000'),
+  codeSymbolContextLines: parseInt(process.env.CODE_SYMBOL_CONTEXT_LINES || '15'),
+  
+  // Batch and rate limiting configuration
+  batchSize: parseInt(process.env.BATCH_SIZE || '100'),
+  batchDelayMs: parseInt(process.env.BATCH_DELAY_MS || '200'),
+  maxConcurrentBatches: parseInt(process.env.MAX_CONCURRENT_BATCHES || '3'),
+  retryAttempts: parseInt(process.env.RETRY_ATTEMPTS || '3'),
+  retryDelayMs: parseInt(process.env.RETRY_DELAY_MS || '1000'),
+  
   // Tier configuration
   tierConfig: process.env.TIER_ENABLED === 'true' ? {
     workingRetention: parseInt(process.env.TIER_WORKING_RETENTION || '48'),
@@ -126,6 +168,6 @@ Environment: ${config.environment}
 ChromaDB URL: http://${config.chromaHost}:${config.chromaPort}
 Collection: ${config.memoryCollectionName}
 Running in Docker: ${config.isDocker}
-Features: ${config.tierEnabled ? '✅ Tiers' : '❌ Tiers'} | ${config.consolidationEnabled ? '✅ Consolidation' : '❌ Consolidation'}
+Features: ${config.tierEnabled ? '✅ Tiers' : '❌ Tiers'} | ${config.consolidationEnabled ? '✅ Consolidation' : '❌ Consolidation'} | ${config.codeIndexingEnabled ? '✅ Code Intelligence' : '❌ Code Intelligence'}
 ${'='.repeat(50)}
 `);

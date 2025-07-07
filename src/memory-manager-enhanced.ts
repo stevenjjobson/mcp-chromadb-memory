@@ -2,6 +2,12 @@ import { ChromaClient } from 'chromadb';
 import { OpenAI } from 'openai';
 import { Config } from './config.js';
 import { TokenManager, CompressionOptions } from './utils/token-manager.js';
+import { CodeContext } from './types/code-intelligence.types.js';
+import { sanitizeMetadata } from './utils/metadata-validator.js';
+
+// Valid memory contexts
+type StandardContext = 'general' | 'user_preference' | 'task_critical' | 'obsidian_note';
+type ValidContext = StandardContext | CodeContext;
 
 interface Memory {
   id: string;
@@ -52,6 +58,14 @@ export class EnhancedMemoryManager {
   private openai: OpenAI;
   private exactIndex: ExactSearchIndex;
   private tierConfigs: Map<TierName, TierConfig> = new Map();
+  
+  // Valid contexts
+  private readonly VALID_CONTEXTS: Set<string> = new Set([
+    // Standard contexts
+    'general', 'user_preference', 'task_critical', 'obsidian_note',
+    // Code contexts
+    'code_symbol', 'code_pattern', 'code_decision', 'code_snippet', 'code_error'
+  ]);
   
   constructor(private config: Config) {
     const chromaUrl = `http://${config.chromaHost}:${config.chromaPort}`;
@@ -671,6 +685,151 @@ export class EnhancedMemoryManager {
     return allResults.slice(0, limit);
   }
   
+  // Batch store memories for better performance
+  async storeBatch(
+    memories: Array<{
+      content: string;
+      context: string;
+      metadata?: Record<string, any>;
+    }>
+  ): Promise<Array<{ stored: boolean; id?: string; importance?: number; tier?: TierName; error?: string }>> {
+    const results: Array<{ stored: boolean; id?: string; importance?: number; tier?: TierName; error?: string }> = [];
+    
+    // Process memories in batches to avoid overwhelming ChromaDB
+    const batchSize = this.config.batchSize || 100;
+    const batchDelay = this.config.batchDelayMs || 200;
+    
+    for (let i = 0; i < memories.length; i += batchSize) {
+      const batch = memories.slice(i, i + batchSize);
+      const batchPromises: Promise<void>[] = [];
+      
+      // Prepare batch data
+      const ids: string[] = [];
+      const documents: string[] = [];
+      const metadatas: Record<string, any>[] = [];
+      const batchMemories: Memory[] = [];
+      
+      // Process each memory in the batch
+      for (const memoryData of batch) {
+        try {
+          // Validate context
+          let context = memoryData.context;
+          if (!this.VALID_CONTEXTS.has(context)) {
+            console.warn(`Invalid context "${context}" provided, defaulting to "general"`);
+            context = 'general';
+          }
+          
+          // Assess importance
+          const importance = await this.assessImportance(memoryData.content, context);
+          
+          if (importance < this.config.memoryImportanceThreshold) {
+            results.push({ 
+              stored: false, 
+              importance,
+              error: `Importance ${importance} below threshold ${this.config.memoryImportanceThreshold}`
+            });
+            continue;
+          }
+          
+          // Generate ID and timestamp
+          const timestamp = new Date().toISOString();
+          const id = `mem_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          
+          // Prepare and sanitize metadata
+          const rawMetadata = {
+            ...memoryData.metadata,
+            context,
+            importance,
+            timestamp,
+            accessCount: 0,
+            lastAccessed: timestamp
+          };
+          
+          const fullMetadata = sanitizeMetadata(rawMetadata);
+          
+          // Create memory object
+          const memory: Memory = {
+            id,
+            content: memoryData.content,
+            context,
+            importance,
+            timestamp,
+            metadata: fullMetadata,
+            accessCount: 0,
+            lastAccessed: timestamp
+          };
+          
+          // Determine tier
+          const tier = this.determineTier(memory);
+          memory.tier = tier;
+          
+          if (this.config.tierEnabled) {
+            (fullMetadata as any).tier = tier;
+          }
+          
+          // Add to batch arrays
+          ids.push(id);
+          documents.push(memoryData.content);
+          metadatas.push(fullMetadata);
+          batchMemories.push(memory);
+          
+        } catch (error) {
+          results.push({
+            stored: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+      
+      // Store the batch if there are valid memories
+      if (ids.length > 0) {
+        try {
+          // Get appropriate collection
+          const tier = batchMemories[0].tier || 'working';
+          const collection = this.getTierCollection(tier);
+          
+          // Batch add to ChromaDB
+          await collection.add({
+            ids,
+            documents,
+            metadatas
+          });
+          
+          // Index memories for exact search
+          for (const memory of batchMemories) {
+            this.indexMemory(memory);
+            results.push({
+              stored: true,
+              id: memory.id,
+              importance: memory.importance,
+              tier: memory.tier
+            });
+          }
+          
+          console.error(`Stored batch of ${ids.length} memories in ${tier} tier`);
+          
+        } catch (error) {
+          // If batch fails, add error for all memories in batch
+          for (const memory of batchMemories) {
+            results.push({
+              stored: false,
+              id: memory.id,
+              error: error instanceof Error ? error.message : 'Batch storage failed'
+            });
+          }
+          console.error('Error storing batch:', error);
+        }
+      }
+      
+      // Add delay between batches to avoid throttling
+      if (i + batchSize < memories.length) {
+        await new Promise(resolve => setTimeout(resolve, batchDelay));
+      }
+    }
+    
+    return results;
+  }
+  
   // Store memory with exact indexing
   async storeMemory(
     content: string,
@@ -678,6 +837,12 @@ export class EnhancedMemoryManager {
     metadata: Record<string, any> = {}
   ): Promise<{ stored: boolean; id?: string; importance?: number; tier?: TierName }> {
     try {
+      // Validate context
+      if (!this.VALID_CONTEXTS.has(context)) {
+        console.warn(`Invalid context "${context}" provided, defaulting to "general"`);
+        context = 'general';
+      }
+      
       // Assess importance
       const importance = await this.assessImportance(content, context);
       
@@ -690,8 +855,8 @@ export class EnhancedMemoryManager {
       const timestamp = new Date().toISOString();
       const id = `mem_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Prepare metadata
-      const fullMetadata = {
+      // Prepare and sanitize metadata for ChromaDB
+      const rawMetadata = {
         ...metadata,
         context,
         importance,
@@ -699,6 +864,9 @@ export class EnhancedMemoryManager {
         accessCount: 0,
         lastAccessed: timestamp
       };
+      
+      // Sanitize metadata to ensure ChromaDB compatibility
+      const fullMetadata = sanitizeMetadata(rawMetadata);
       
       // Create memory object
       const memory: Memory = {
@@ -823,6 +991,12 @@ export class EnhancedMemoryManager {
     if (context === 'task_critical') importance += 0.3;
     else if (context === 'user_preference') importance += 0.2;
     else if (context === 'obsidian_note') importance += 0.25;
+    // Code-specific contexts
+    else if (context === 'code_symbol') importance += 0.25; // Code symbols are important
+    else if (context === 'code_pattern') importance += 0.3; // Patterns are very important
+    else if (context === 'code_decision') importance += 0.35; // Code decisions are critical
+    else if (context === 'code_snippet') importance += 0.2; // Snippets are moderately important
+    else if (context === 'code_error') importance += 0.3; // Errors need attention
     
     // Content-based adjustments
     const contentLength = content.length;

@@ -40,6 +40,8 @@ import {
   TaskSummary,
   HealthStatus 
 } from './types/vault-index.types.js';
+import { CodeIntelligenceTools } from './tools/code-intelligence-tools.js';
+import { sanitizeMetadata } from './utils/metadata-validator.js';
 
 // Handle Windows-specific process signals
 if (process.platform === "win32") {
@@ -80,6 +82,7 @@ let vaultIndexService: VaultIndexService | null = null;
 let memoryHealthMonitor: MemoryHealthMonitor | null = null;
 let vaultFileWatcher: VaultFileWatcher | null = null;
 let migrationService: MigrationService | null = null;
+let codeIntelligenceTools: CodeIntelligenceTools | null = null;
 
 // Update the tools list in ListToolsRequestSchema handler
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -105,7 +108,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             context: {
               type: 'string',
-              description: 'Context category (e.g., general, user_preference, task_critical, obsidian_note)',
+              description: 'Context category (e.g., general, user_preference, task_critical, obsidian_note, code_symbol, code_pattern, code_decision, code_snippet, code_error)',
               default: 'general'
             },
             metadata: {
@@ -845,7 +848,31 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ['stateId1', 'stateId2']
         },
-      }
+      },
+      // Code Intelligence Tools (conditionally added)
+      ...(codeIntelligenceTools ? codeIntelligenceTools.getTools().map(tool => ({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: {
+          type: 'object',
+          properties: Object.fromEntries(
+            Object.entries(tool.inputSchema.shape).map(([key, schema]: [string, any]) => [
+              key,
+              {
+                type: schema._def.typeName === 'ZodString' ? 'string' : 
+                      schema._def.typeName === 'ZodNumber' ? 'number' : 
+                      schema._def.typeName === 'ZodBoolean' ? 'boolean' : 
+                      schema._def.typeName === 'ZodArray' ? 'array' : 'object',
+                description: schema.description,
+                ...(schema._def.defaultValue !== undefined ? { default: schema._def.defaultValue() } : {})
+              }
+            ])
+          ),
+          required: Object.entries(tool.inputSchema.shape)
+            .filter(([_, schema]: [string, any]) => !schema.isOptional())
+            .map(([key]) => key)
+        }
+      })) : [])
     ],
   };
 });
@@ -875,10 +902,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
         
       case 'store_memory': {
+        // Sanitize metadata before storing
+        const metadata = args?.metadata ? sanitizeMetadata(args.metadata as Record<string, any>) : undefined;
+        
         const storeResult = await memoryManager.storeMemory(
           args?.content as string,
           args?.context as string,
-          args?.metadata as Record<string, any>
+          metadata
         );
         
         return {
@@ -2001,6 +2031,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
       }
+      
+      // Code Intelligence Tools
+      case 'index_codebase':
+      case 'find_symbol':
+      case 'get_symbol_context':
+      case 'analyze_code_patterns':
+      case 'search_code_natural': {
+        if (!codeIntelligenceTools) {
+          throw new Error('Code intelligence tools not initialized');
+        }
+        
+        const tool = codeIntelligenceTools.getTools().find(t => t.name === name);
+        if (!tool) {
+          throw new Error(`Code intelligence tool not found: ${name}`);
+        }
+        
+        try {
+          const result = await tool.handler(args || {});
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2)
+              }
+            ]
+          };
+        } catch (error) {
+          throw new Error(`Code intelligence tool error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
         
       default:
         throw new Error(`Unknown tool: ${name}`);
@@ -2263,6 +2323,10 @@ async function main() {
     // Initialize memory pattern service
     memoryPatternService = new MemoryPatternService(memoryManager);
     console.error('Memory pattern service initialized');
+    
+    // Initialize code intelligence tools
+    codeIntelligenceTools = new CodeIntelligenceTools(memoryManager);
+    console.error('Code intelligence tools initialized');
     
     // Initialize migration service if tiers are enabled
     if (config.tierEnabled) {
