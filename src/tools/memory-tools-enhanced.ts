@@ -144,7 +144,7 @@ export const enhancedMemoryTools = [
 // Tool handlers
 export async function handleSearchExact(
   args: z.infer<typeof searchExactSchema>,
-  memoryManager: EnhancedMemoryManager
+  memoryManager: EnhancedMemoryManager | import('../memory-manager-hybrid.js').HybridMemoryManager
 ) {
   const { query, field, limit } = args;
   
@@ -176,7 +176,7 @@ export async function handleSearchExact(
 
 export async function handleSearchHybrid(
   args: z.infer<typeof searchHybridSchema>,
-  memoryManager: EnhancedMemoryManager
+  memoryManager: EnhancedMemoryManager | import('../memory-manager-hybrid.js').HybridMemoryManager
 ) {
   const { query, context, exactWeight, limit } = args;
   
@@ -217,7 +217,7 @@ export async function handleSearchHybrid(
 
 export async function handleGetCompressedContext(
   args: z.infer<typeof getCompressedContextSchema>,
-  memoryManager: EnhancedMemoryManager
+  memoryManager: EnhancedMemoryManager | import('../memory-manager-hybrid.js').HybridMemoryManager
 ) {
   const { query, maxTokens, preserveStructure, smartFiltering } = args;
   
@@ -243,7 +243,7 @@ export async function handleGetCompressedContext(
 
 export async function handleGetOptimizedMemory(
   args: z.infer<typeof getOptimizedMemorySchema>,
-  memoryManager: EnhancedMemoryManager
+  memoryManager: EnhancedMemoryManager | import('../memory-manager-hybrid.js').HybridMemoryManager
 ) {
   const { memoryId, maxTokens } = args;
   

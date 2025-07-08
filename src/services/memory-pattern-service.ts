@@ -1,4 +1,5 @@
 import { EnhancedMemoryManager } from '../memory-manager-enhanced.js';
+import { HybridMemoryManager } from '../memory-manager-hybrid.js';
 
 export interface AccessPattern {
   memoryId: string;
@@ -30,7 +31,7 @@ export class MemoryPatternService {
   private readonly RECENCY_HOT_HOURS = 24;
   private readonly RECENCY_WARM_DAYS = 7;
   
-  constructor(private memoryManager: EnhancedMemoryManager) {}
+  constructor(private memoryManager: EnhancedMemoryManager | HybridMemoryManager) {}
   
   // Track memory access
   async trackAccess(memoryId: string): Promise<void> {

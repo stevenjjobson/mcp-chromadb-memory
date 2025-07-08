@@ -4,6 +4,7 @@ import { Config } from './config.js';
 import { TokenManager, CompressionOptions } from './utils/token-manager.js';
 import { CodeContext } from './types/code-intelligence.types.js';
 import { sanitizeMetadata } from './utils/metadata-validator.js';
+import { withRetry } from './utils/retry-helper.js';
 
 // Valid memory contexts
 type StandardContext = 'general' | 'user_preference' | 'task_critical' | 'obsidian_note';
@@ -52,8 +53,8 @@ interface TierCollections {
 }
 
 export class EnhancedMemoryManager {
-  private client: ChromaClient;
-  private collection: any; // Main collection for backward compatibility
+  protected client: ChromaClient;
+  protected collection: any; // Main collection for backward compatibility
   private tierCollections: TierCollections = {};
   private openai: OpenAI;
   private exactIndex: ExactSearchIndex;
@@ -154,14 +155,6 @@ export class EnhancedMemoryManager {
     }
   }
   
-  private async generateEmbedding(text: string): Promise<number[]> {
-    const response = await this.openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: text,
-    });
-    
-    return response.data[0].embedding;
-  }
   
   // Initialize tier collections
   private async initializeTiers(): Promise<void> {
@@ -332,7 +325,7 @@ export class EnhancedMemoryManager {
   }
   
   // Index a single memory for exact search
-  private indexMemory(memory: Memory): void {
+  protected indexMemory(memory: Memory): void {
     // Cache the memory
     this.exactIndex.memoryCache.set(memory.id, memory);
     
@@ -360,7 +353,7 @@ export class EnhancedMemoryManager {
   }
   
   // Extract keywords from text (simple tokenization)
-  private extractKeywords(text: string): Set<string> {
+  protected extractKeywords(text: string): Set<string> {
     // Simple keyword extraction - can be enhanced with NLP
     const words = text.toLowerCase()
       .replace(/[^\w\s]/g, ' ') // Remove punctuation
@@ -788,12 +781,20 @@ export class EnhancedMemoryManager {
           const tier = batchMemories[0].tier || 'working';
           const collection = this.getTierCollection(tier);
           
-          // Batch add to ChromaDB
-          await collection.add({
-            ids,
-            documents,
-            metadatas
-          });
+          // Batch add to ChromaDB with retry logic
+          await withRetry(
+            async () => collection.add({
+              ids,
+              documents,
+              metadatas
+            }),
+            {
+              maxAttempts: this.config.retryAttempts || 3,
+              initialDelayMs: this.config.retryDelayMs || 1000,
+              backoffMultiplier: 2,
+              maxDelayMs: 10000
+            }
+          );
           
           // Index memories for exact search
           for (const memory of batchMemories) {
@@ -890,12 +891,20 @@ export class EnhancedMemoryManager {
         (fullMetadata as any).tier = tier;
       }
       
-      // Store in appropriate collection
-      await collection.add({
-        ids: [id],
-        documents: [content],
-        metadatas: [fullMetadata]
-      });
+      // Store in appropriate collection with retry logic
+      await withRetry(
+        async () => collection.add({
+          ids: [id],
+          documents: [content],
+          metadatas: [fullMetadata]
+        }),
+        {
+          maxAttempts: this.config.retryAttempts || 3,
+          initialDelayMs: this.config.retryDelayMs || 1000,
+          backoffMultiplier: 2,
+          maxDelayMs: 10000
+        }
+      );
       
       // Index for exact search
       this.indexMemory(memory);
@@ -909,23 +918,7 @@ export class EnhancedMemoryManager {
     }
   }
   
-  // Helper methods (existing)
-  private calculateRecencyScore(timestamp: string, currentTime: number): number {
-    const memoryTime = new Date(timestamp).getTime();
-    const ageInHours = (currentTime - memoryTime) / (1000 * 60 * 60);
-    
-    // Decay function: score decreases as memory gets older
-    // Score is 1.0 for memories less than 1 hour old
-    // Score is 0.5 for memories 24 hours old
-    // Score approaches 0 for very old memories
-    return Math.exp(-ageInHours / 24);
-  }
-  
-  private calculateFrequencyScore(accessCount: number): number {
-    // Logarithmic scaling to prevent extremely high access counts from dominating
-    // Score is 0 for never accessed, approaches 1 for frequently accessed
-    return Math.min(1, Math.log10(accessCount + 1) / 2);
-  }
+  // Helper methods removed - using protected versions instead
   
   private async updateMemoryAccess(memoryId: string, tier?: TierName): Promise<void> {
     try {
@@ -983,39 +976,6 @@ export class EnhancedMemoryManager {
     }
   }
   
-  private async assessImportance(content: string, context: string): Promise<number> {
-    // Simple heuristic-based importance assessment
-    let importance = 0.5; // Base importance
-    
-    // Context-based adjustments
-    if (context === 'task_critical') importance += 0.3;
-    else if (context === 'user_preference') importance += 0.2;
-    else if (context === 'obsidian_note') importance += 0.25;
-    // Code-specific contexts
-    else if (context === 'code_symbol') importance += 0.25; // Code symbols are important
-    else if (context === 'code_pattern') importance += 0.3; // Patterns are very important
-    else if (context === 'code_decision') importance += 0.35; // Code decisions are critical
-    else if (context === 'code_snippet') importance += 0.2; // Snippets are moderately important
-    else if (context === 'code_error') importance += 0.3; // Errors need attention
-    
-    // Content-based adjustments
-    const contentLength = content.length;
-    if (contentLength > 500) importance += 0.1; // Longer content is often more important
-    if (content.includes('password') || content.includes('key') || content.includes('secret')) {
-      importance += 0.3; // Security-related content
-    }
-    if (content.includes('remember') || content.includes('important') || content.includes('critical')) {
-      importance += 0.2; // Explicitly marked as important
-    }
-    
-    // Pattern matching for code snippets
-    if (content.includes('function') || content.includes('class') || content.includes('def ')) {
-      importance += 0.15; // Code is usually important
-    }
-    
-    // Ensure importance stays within [0, 1]
-    return Math.min(1, Math.max(0, importance));
-  }
   
   async deleteMemory(memoryId: string): Promise<boolean> {
     try {
@@ -1399,5 +1359,132 @@ export class EnhancedMemoryManager {
     }
     
     return migrations;
+  }
+  
+  /**
+   * Generate embedding for text using OpenAI
+   */
+  protected async generateEmbedding(text: string): Promise<number[]> {
+    try {
+      const response = await this.openai.embeddings.create({
+        model: 'text-embedding-ada-002',
+        input: text,
+      });
+      
+      return response.data[0].embedding;
+    } catch (error) {
+      console.error('Failed to generate embedding:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Assess the importance of content
+   */
+  protected async assessImportance(content: string, context: string): Promise<number> {
+    // Simple heuristic-based importance assessment
+    let importance = 0.5; // Base importance
+    
+    // Context-based adjustments
+    if (context === 'task_critical' || context === 'code_decision') {
+      importance += 0.3;
+    } else if (context === 'user_preference' || context === 'code_pattern') {
+      importance += 0.2;
+    } else if (context === 'code_error') {
+      importance += 0.25;
+    }
+    
+    // Content-based adjustments
+    const contentLower = content.toLowerCase();
+    
+    // Keywords that increase importance
+    const importantKeywords = [
+      'important', 'critical', 'remember', 'always', 'never',
+      'bug', 'error', 'fix', 'todo', 'fixme', 'hack',
+      'security', 'password', 'auth', 'key', 'secret'
+    ];
+    
+    for (const keyword of importantKeywords) {
+      if (contentLower.includes(keyword)) {
+        importance += 0.1;
+        break;
+      }
+    }
+    
+    // Length adjustment (longer content might be more detailed/important)
+    if (content.length > 500) {
+      importance += 0.1;
+    }
+    
+    // Cap at 1.0
+    return Math.min(importance, 1.0);
+  }
+  
+  /**
+   * Validate context is valid
+   */
+  protected validateContext(context: string): boolean {
+    return this.VALID_CONTEXTS.has(context);
+  }
+  
+  /**
+   * Calculate recency score for memory ranking
+   */
+  protected calculateRecencyScore(timestamp: string, now: number): number {
+    const age = now - new Date(timestamp).getTime();
+    const hourInMs = 60 * 60 * 1000;
+    const dayInMs = 24 * hourInMs;
+    
+    if (age < hourInMs) return 1.0; // Within 1 hour
+    if (age < 6 * hourInMs) return 0.8; // Within 6 hours
+    if (age < dayInMs) return 0.6; // Within 1 day
+    if (age < 7 * dayInMs) return 0.4; // Within 7 days
+    if (age < 30 * dayInMs) return 0.2; // Within 30 days
+    return 0.1; // Older than 30 days
+  }
+
+  /**
+   * Calculate frequency score based on access count
+   */
+  protected calculateFrequencyScore(accessCount: number): number {
+    if (accessCount === 0) return 0.0;
+    if (accessCount === 1) return 0.2;
+    if (accessCount <= 3) return 0.4;
+    if (accessCount <= 5) return 0.6;
+    if (accessCount <= 10) return 0.8;
+    return 1.0; // More than 10 accesses
+  }
+  
+  /**
+   * Health check for memory system
+   */
+  async healthCheck(): Promise<any> {
+    try {
+      // Check ChromaDB connection
+      const heartbeat = await this.client.heartbeat();
+      
+      // Get collection count
+      const result = await this.collection.count();
+      
+      return {
+        status: 'healthy',
+        chromadb: {
+          connected: true,
+          heartbeat: heartbeat,
+          memoryCount: result
+        },
+        tiers: this.config.tierEnabled ? {
+          enabled: true,
+          collections: Object.keys(this.tierCollections)
+        } : {
+          enabled: false
+        }
+      };
+    } catch (error) {
+      return {
+        status: 'unhealthy',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
   }
 }

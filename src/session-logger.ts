@@ -298,9 +298,8 @@ tools: [${Array.from(this.sessionSummary.toolsUsed).join(', ')}]
     // Improved file naming: YYYY-MM-DD-Project-Name.md
     const fileName = `${year}-${month}-${day}-${cleanProjectName}.md`;
     
-    // Create year/month folder structure
-    const folderPath = `${this.sessionFolder}/${year}/${month}`;
-    const notePath = `${folderPath}/${fileName}`;
+    // Write directly to Sessions folder (no year/month subfolders)
+    const notePath = `${this.sessionFolder}/${fileName}`;
     
     // Generate note content
     let noteContent = this.generateObsidianNote();

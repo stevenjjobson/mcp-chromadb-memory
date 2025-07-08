@@ -88,6 +88,22 @@ const ConfigSchema = z.object({
   retryAttempts: z.number().default(3),
   retryDelayMs: z.number().default(1000),
   
+  // PostgreSQL configuration
+  postgresHost: z.string().default('localhost'),
+  postgresPort: z.number().default(5432),
+  postgresDatabase: z.string().default('mcp_memory'),
+  postgresUser: z.string().default('mcp_user'),
+  postgresPassword: z.string(),
+  postgresPoolMax: z.number().default(20),
+  postgresPoolMin: z.number().default(5),
+  postgresIdleTimeout: z.number().default(30000),
+  postgresConnectionTimeout: z.number().default(2000),
+  
+  // Hybrid storage feature flags
+  useHybridStorage: z.boolean().default(false),
+  enableDualWrite: z.boolean().default(false),
+  postgresReadRatio: z.number().default(0.0), // 0-1, percentage of reads from PostgreSQL
+  
   // Tier configuration (only used if tierEnabled)
   tierConfig: z.object({
     workingRetention: z.number().default(48),
@@ -146,6 +162,22 @@ export const config = ConfigSchema.parse({
   retryAttempts: parseInt(process.env.RETRY_ATTEMPTS || '3'),
   retryDelayMs: parseInt(process.env.RETRY_DELAY_MS || '1000'),
   
+  // PostgreSQL configuration
+  postgresHost: isDocker ? (ENVIRONMENT === 'DEVELOPMENT' ? 'postgres-DEVELOPMENT' : 'postgres') : (process.env.POSTGRES_HOST || 'localhost'),
+  postgresPort: parseInt(process.env.POSTGRES_PORT || (ENVIRONMENT === 'DEVELOPMENT' ? '5433' : '5432')),
+  postgresDatabase: process.env.POSTGRES_DATABASE || (ENVIRONMENT === 'DEVELOPMENT' ? 'mcp_memory_dev' : 'mcp_memory'),
+  postgresUser: process.env.POSTGRES_USER || 'mcp_user',
+  postgresPassword: getSecret('postgres_password', 'POSTGRES_PASSWORD') || 'mcp_memory_pass',
+  postgresPoolMax: parseInt(process.env.POSTGRES_POOL_MAX || '20'),
+  postgresPoolMin: parseInt(process.env.POSTGRES_POOL_MIN || '5'),
+  postgresIdleTimeout: parseInt(process.env.POSTGRES_IDLE_TIMEOUT || '30000'),
+  postgresConnectionTimeout: parseInt(process.env.POSTGRES_CONNECTION_TIMEOUT || '2000'),
+  
+  // Hybrid storage feature flags
+  useHybridStorage: process.env.USE_HYBRID_STORAGE === 'true',
+  enableDualWrite: process.env.ENABLE_DUAL_WRITE === 'true',
+  postgresReadRatio: parseFloat(process.env.POSTGRES_READ_RATIO || '0.0'),
+  
   // Tier configuration
   tierConfig: process.env.TIER_ENABLED === 'true' ? {
     workingRetention: parseInt(process.env.TIER_WORKING_RETENTION || '48'),
@@ -166,8 +198,9 @@ ${'='.repeat(50)}
 ${config.instanceLabel} MCP Memory Server
 Environment: ${config.environment}
 ChromaDB URL: http://${config.chromaHost}:${config.chromaPort}
+PostgreSQL: ${config.postgresHost}:${config.postgresPort}/${config.postgresDatabase}
 Collection: ${config.memoryCollectionName}
 Running in Docker: ${config.isDocker}
-Features: ${config.tierEnabled ? '✅ Tiers' : '❌ Tiers'} | ${config.consolidationEnabled ? '✅ Consolidation' : '❌ Consolidation'} | ${config.codeIndexingEnabled ? '✅ Code Intelligence' : '❌ Code Intelligence'}
+Features: ${config.tierEnabled ? '✅ Tiers' : '❌ Tiers'} | ${config.consolidationEnabled ? '✅ Consolidation' : '❌ Consolidation'} | ${config.codeIndexingEnabled ? '✅ Code Intelligence' : '❌ Code Intelligence'} | ${config.useHybridStorage ? '✅ Hybrid Storage' : '❌ Hybrid Storage'}
 ${'='.repeat(50)}
 `);

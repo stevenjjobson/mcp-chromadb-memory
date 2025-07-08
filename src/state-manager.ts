@@ -3,6 +3,7 @@ import * as path from 'path';
 import { gzipSync, gunzipSync } from 'zlib';
 import { VaultManager } from './vault-manager.js';
 import { EnhancedMemoryManager } from './memory-manager-enhanced.js';
+import { HybridMemoryManager } from './memory-manager-hybrid.js';
 import {
   StateCapture,
   WorkingContext,
@@ -22,13 +23,13 @@ const generateId = (prefix: string = 'state'): string => {
 export class StateManager {
   private statesPath: string;
   private vaultManager: VaultManager;
-  private memoryManager: EnhancedMemoryManager;
+  private memoryManager: EnhancedMemoryManager | HybridMemoryManager;
   private maxStatesPerVault: number;
   private compressionEnabled: boolean;
 
   constructor(
     vaultManager: VaultManager,
-    memoryManager: EnhancedMemoryManager,
+    memoryManager: EnhancedMemoryManager | HybridMemoryManager,
     options: {
       statesPath?: string;
       maxStatesPerVault?: number;

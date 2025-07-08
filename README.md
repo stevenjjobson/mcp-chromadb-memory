@@ -55,6 +55,8 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 - 🔍 **Code-Aware Search** - Stream-based symbol search, find implementations and patterns instantly
 - 📊 **Code Pattern Recognition** - Detect and learn from coding patterns, suggest improvements
 - ⚡ **Streaming Responses** - Fast, incremental results optimized for Claude Code and large codebases
+- 🚀 **Hybrid Storage** - PostgreSQL + ChromaDB for optimal performance (1700+ symbols/second indexing)
+- 🔄 **Dual-Write Migration** - Gradual migration strategy with configurable read ratios
 
 #### Platform Enhancements (Coming Soon)
 - 🧬 **Advanced Pattern Recognition** - Deep learning from development patterns across projects
@@ -72,6 +74,8 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 ## 📖 Quick References
 
 - **[Memory Usage Guide](./MEMORY_USAGE_GUIDE.md)** - Learn how to effectively use the memory system
+- **[Hybrid Storage Guide](./HYBRID_STORAGE_GUIDE.md)** - PostgreSQL + ChromaDB hybrid architecture
+- **[Code Intelligence Guide](./CODE_INTELLIGENCE_GUIDE.md)** - Code-aware features and symbol indexing
 - **[Dual Instance Setup](./Project_Context/DUAL_INSTANCE_SETUP.md)** - Set up isolated development environment
 - **[Development Status](./Project_Context/DEVELOPMENT_STATUS.md)** - Current progress and roadmap
 
@@ -93,14 +97,14 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 
 3. **Start services**
    ```bash
-   # For Claude Desktop - start only ChromaDB
-   docker-compose up -d chromadb
+   # For Claude Desktop - start ChromaDB and PostgreSQL
+   docker-compose up -d chromadb postgres
    
    # Or use the convenience script (Windows)
    .\start-chromadb.ps1
    ```
    
-   **Note**: Claude Desktop creates its own MCP container automatically. You only need ChromaDB running.
+   **Note**: Claude Desktop creates its own MCP container automatically. You need ChromaDB and PostgreSQL running for hybrid storage.
 
 4. **Verify installation**
    ```bash

@@ -1,4 +1,5 @@
 import { EnhancedMemoryManager } from '../memory-manager-enhanced.js';
+import { HybridMemoryManager } from '../memory-manager-hybrid.js';
 import { Config } from '../config.js';
 
 export interface MigrationReport {
@@ -20,7 +21,7 @@ export class MigrationService {
   private lastMigration: Date | null = null;
   
   constructor(
-    private memoryManager: EnhancedMemoryManager,
+    private memoryManager: EnhancedMemoryManager | HybridMemoryManager,
     private config: Config
   ) {}
   

@@ -11,6 +11,7 @@ import { z } from 'zod';
 import * as path from 'path';
 import { config } from './config.js';
 import { EnhancedMemoryManager } from './memory-manager-enhanced.js';
+import { HybridMemoryManager } from './memory-manager-hybrid.js';
 import { MemoryPatternService } from './services/memory-pattern-service.js';
 import { 
   enhancedMemoryTools,
@@ -70,7 +71,7 @@ const server = new Server(
 );
 
 // Initialize memory manager (to be implemented)
-let memoryManager: EnhancedMemoryManager;
+let memoryManager: EnhancedMemoryManager | HybridMemoryManager;
 let memoryPatternService: MemoryPatternService | null = null;
 let obsidianManager: ObsidianManager | null = null;
 let sessionLogger: SessionLogger | null = null;
@@ -2314,8 +2315,14 @@ async function main() {
     console.error(`Platform: ${process.platform}`);
     console.error(`Docker mode: ${config.isDocker}`);
     
-    // Initialize enhanced memory manager
-    memoryManager = new EnhancedMemoryManager(config);
+    // Initialize memory manager - use hybrid if enabled
+    if (config.useHybridStorage) {
+      console.error('Using Hybrid Memory Manager (PostgreSQL + ChromaDB)');
+      memoryManager = new HybridMemoryManager(config);
+    } else {
+      console.error('Using Enhanced Memory Manager (ChromaDB only)');
+      memoryManager = new EnhancedMemoryManager(config);
+    }
     await memoryManager.initialize();
     
     console.error('Enhanced memory manager initialized successfully');

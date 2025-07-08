@@ -1,4 +1,28 @@
 services:
+  # PostgreSQL with pgvector for development
+  postgres-DEVELOPMENT:
+    image: pgvector/pgvector:pg16
+    container_name: postgres-DEVELOPMENT
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=mcp_memory_dev
+      - POSTGRES_USER=mcp_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mcp_memory_dev_pass}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp_user -d mcp_memory_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - memory-network-DEVELOPMENT
+    labels:
+      - "environment=DEVELOPMENT"
+      - "purpose=testing-hybrid-architecture"
+
   chromadb-DEVELOPMENT:
     image: chromadb/chroma:latest
     container_name: chromadb-DEVELOPMENT
@@ -24,6 +48,10 @@ services:
 networks:
   memory-network-DEVELOPMENT:
     driver: bridge
+
+volumes:
+  postgres_data_dev:
+    driver: local
 
 # Development-specific secrets (if needed)
 secrets:

@@ -1,4 +1,25 @@
 services:
+  # PostgreSQL with pgvector for hybrid storage
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: postgres-memory
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=mcp_memory
+      - POSTGRES_USER=mcp_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mcp_memory_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp_user -d mcp_memory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - memory-network
+
   chromadb:
     image: chromadb/chroma:latest
     container_name: chromadb-memory
@@ -50,6 +71,10 @@ services:
 networks:
   memory-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
 
 secrets:
   openai_api_key:

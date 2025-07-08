@@ -6,8 +6,10 @@
 import { z } from 'zod';
 import { SimpleCodeParser } from '../utils/code-parser.js';
 import { EnhancedMemoryManager } from '../memory-manager-enhanced.js';
+import { HybridMemoryManager } from '../memory-manager-hybrid.js';
 import { 
   CodeSymbol, 
+  CodeSymbolType,
   IndexOptions, 
   CodeQueryOptions,
   StreamingCodeResult,
@@ -33,7 +35,7 @@ interface CodePattern {
 export class CodeIntelligenceTools {
   private parser: SimpleCodeParser;
   
-  constructor(private memoryManager: EnhancedMemoryManager) {
+  constructor(private memoryManager: EnhancedMemoryManager | HybridMemoryManager) {
     this.parser = new SimpleCodeParser();
   }
   
@@ -97,6 +99,28 @@ export class CodeIntelligenceTools {
         }),
         handler: this.searchCodeNatural.bind(this),
       },
+      {
+        name: 'find_files',
+        description: 'Search for files by name, extension, or directory with fast database lookup',
+        inputSchema: z.object({
+          name: z.string().optional().describe('File name or partial name to search for'),
+          extension: z.string().optional().describe('File extension (e.g., .ts, .js)'),
+          directory: z.string().optional().describe('Directory path or partial path'),
+          fileType: z.enum(['code', 'config', 'documentation', 'asset', 'test', 'other']).optional().describe('Type of file'),
+          limit: z.number().optional().default(50).describe('Maximum number of results'),
+        }),
+        handler: this.searchFiles.bind(this),
+      },
+      {
+        name: 'explore_folder',
+        description: 'List contents of a directory with file statistics and hierarchical structure',
+        inputSchema: z.object({
+          path: z.string().describe('Directory path to explore'),
+          recursive: z.boolean().optional().default(false).describe('Include all subdirectories recursively'),
+          showStats: z.boolean().optional().default(true).describe('Include file statistics'),
+        }),
+        handler: this.exploreFolder.bind(this),
+      },
     ];
   }
   
@@ -126,7 +150,54 @@ export class CodeIntelligenceTools {
       
       console.error(`Found ${files.length} files to index`);
       
-      // Collect all symbols for batch processing
+      // Check if we're using hybrid storage for direct PostgreSQL access
+      const isHybrid = this.memoryManager instanceof HybridMemoryManager;
+      
+      if (isHybrid) {
+        console.error('Using PostgreSQL for bulk symbol storage (no throttling!)');
+      } else {
+        console.error('Using ChromaDB for symbol storage (may experience throttling)');
+      }
+      
+      // Get file repository if available
+      const fileRepo = isHybrid ? (this.memoryManager as HybridMemoryManager).getFileRepository() : null;
+      
+      // Index directories first if we have file repository
+      if (fileRepo) {
+        console.error('Indexing directory structure...');
+        const directories = new Set<string>();
+        
+        // Collect all directories
+        for (const file of files) {
+          const dir = path.dirname(file);
+          let currentDir = dir;
+          while (currentDir && currentDir !== args.path && currentDir !== path.dirname(currentDir)) {
+            directories.add(currentDir);
+            currentDir = path.dirname(currentDir);
+          }
+        }
+        
+        // Store directories
+        const dirArray = Array.from(directories).sort();
+        for (const dir of dirArray) {
+          try {
+            await fileRepo.upsert({
+              file_path: dir,
+              file_name: path.basename(dir),
+              directory_path: path.dirname(dir),
+              parent_directory: path.dirname(dir),
+              is_directory: true,
+              project_id: args.path // Use root path as project ID for now
+            });
+          } catch (error) {
+            console.error(`Error indexing directory ${dir}:`, error);
+          }
+        }
+        console.error(`Indexed ${dirArray.length} directories`);
+      }
+      
+      // Collect all symbols and file info
+      const allSymbols: CodeSymbol[] = [];
       const symbolBatch: Array<{
         content: string;
         context: string;
@@ -143,11 +214,54 @@ export class CodeIntelligenceTools {
             continue;
           }
           
-          // Parse the file
-          const symbols = await this.parser.parseFile(file);
-          stats.filesProcessed++;
+          // Index the file in PostgreSQL if available
+          if (fileRepo) {
+            try {
+              const fileRecord = await fileRepo.upsert({
+                file_path: file,
+                file_name: path.basename(file),
+                directory_path: path.dirname(file),
+                extension: path.extname(file),
+                size_bytes: fileStat.size,
+                parent_directory: path.dirname(file),
+                file_modified: fileStat.mtime,
+                project_id: args.path // Use root path as project ID for now
+              });
+              
+              // Parse the file for symbols
+              const symbols = await this.parser.parseFile(file);
+              stats.filesProcessed++;
+              
+              // Update file with symbol count
+              if (symbols.length > 0) {
+                await fileRepo.updateFileCounts(fileRecord.id, {
+                  contains_symbols: symbols.length
+                });
+              }
+              
+              // Collect symbols for PostgreSQL
+              if (isHybrid) {
+                allSymbols.push(...symbols);
+              }
+            } catch (error) {
+              console.error(`Error indexing file ${file}:`, error);
+              stats.errors.push({
+                file,
+                error: `Failed to index file: ${error instanceof Error ? error.message : 'Unknown error'}`
+              });
+            }
+          } else {
+            // No file repo, just parse symbols
+            const symbols = await this.parser.parseFile(file);
+            stats.filesProcessed++;
+            
+            // Collect symbols for PostgreSQL
+            if (isHybrid) {
+              allSymbols.push(...symbols);
+            }
+          }
           
-          // Prepare symbols for batch storage
+          // Also prepare for ChromaDB format (fallback)
           for (const symbol of symbols) {
             try {
               // Create memory content with symbol information
@@ -186,9 +300,31 @@ export class CodeIntelligenceTools {
         }
       }
       
-      // Store symbols in batches
-      if (symbolBatch.length > 0) {
-        console.error(`Storing ${symbolBatch.length} symbols in batches...`);
+      // Store symbols
+      if (isHybrid && allSymbols.length > 0) {
+        // Use PostgreSQL bulk storage for symbols
+        console.error(`Storing ${allSymbols.length} symbols in PostgreSQL...`);
+        
+        try {
+          const storedCount = await (this.memoryManager as HybridMemoryManager).storeCodeSymbols(allSymbols);
+          stats.symbolsIndexed = storedCount;
+          
+          // Update breakdown
+          for (const symbol of allSymbols) {
+            stats.breakdown[symbol.type] = (stats.breakdown[symbol.type] || 0) + 1;
+          }
+          
+          console.error(`✅ Successfully indexed ${storedCount} symbols in PostgreSQL!`);
+        } catch (error) {
+          console.error('PostgreSQL bulk storage failed:', error);
+          stats.errors.push({
+            file: 'batch',
+            error: `PostgreSQL storage failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          });
+        }
+      } else if (symbolBatch.length > 0) {
+        // Fallback to ChromaDB batch storage
+        console.error(`Storing ${symbolBatch.length} symbols in ChromaDB batches...`);
         
         try {
           const results = await this.memoryManager.storeBatch(symbolBatch);
@@ -200,8 +336,10 @@ export class CodeIntelligenceTools {
               // Extract symbol type from the batch for breakdown
               const batchIndex = results.indexOf(result);
               if (batchIndex >= 0 && batchIndex < symbolBatch.length) {
-                const symbolType = symbolBatch[batchIndex].metadata?.symbolType || 'unknown';
-                stats.breakdown[symbolType] = (stats.breakdown[symbolType] || 0) + 1;
+                const symbolType = symbolBatch[batchIndex].metadata?.symbolType as CodeSymbolType;
+                if (symbolType) {
+                  stats.breakdown[symbolType] = (stats.breakdown[symbolType] || 0) + 1;
+                }
               }
             } else if (result.error) {
               stats.errors.push({
@@ -211,10 +349,10 @@ export class CodeIntelligenceTools {
             }
           }
         } catch (error) {
-          console.error('Batch storage failed:', error);
+          console.error('ChromaDB batch storage failed:', error);
           stats.errors.push({
             file: 'batch',
-            error: `Batch storage failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            error: `ChromaDB batch storage failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
           });
         }
       }
@@ -237,36 +375,61 @@ export class CodeIntelligenceTools {
     limit?: number;
   }): Promise<StreamingCodeResult[]> {
     try {
-      // Use exact search for symbol names
-      const memories = await this.memoryManager.searchExact(args.query, 'symbolName');
-      
-      // Filter by type if specified
-      let filtered = memories;
-      if (args.type && args.type.length > 0) {
-        filtered = memories.filter(m => 
-          args.type!.includes(m.metadata.symbolType as any)
-        );
+      // Check if we're using hybrid storage
+      if (this.memoryManager instanceof HybridMemoryManager) {
+        // Use PostgreSQL symbol search
+        const symbols = await this.memoryManager.searchCodeSymbols(args.query, {
+          type: args.type?.[0], // Use first type for now
+          limit: args.limit
+        });
+        
+        // Filter by file if specified
+        let filtered = symbols;
+        if (args.file) {
+          filtered = symbols.filter(s => s.file.includes(args.file!));
+        }
+        
+        // Convert to streaming results
+        return filtered.map(symbol => ({
+          symbol,
+          score: 1.0,
+          matches: [{
+            field: 'name',
+            highlight: symbol.name,
+          }],
+        }));
+      } else {
+        // Fallback to ChromaDB search
+        const memories = await this.memoryManager.searchExact(args.query, 'symbolName');
+        
+        // Filter by type if specified
+        let filtered = memories;
+        if (args.type && args.type.length > 0) {
+          filtered = memories.filter(m => 
+            args.type!.includes(m.metadata.symbolType as any)
+          );
+        }
+        
+        // Filter by file pattern if specified
+        if (args.file) {
+          filtered = filtered.filter(m => 
+            m.metadata.file && m.metadata.file.includes(args.file)
+          );
+        }
+        
+        // Limit results
+        const limited = filtered.slice(0, args.limit);
+        
+        // Convert to streaming results
+        return limited.map(memory => ({
+          symbol: this.memoryToSymbol(memory),
+          score: 1.0, // Exact match
+          matches: [{
+            field: 'name',
+            highlight: memory.metadata.symbolName as string,
+          }],
+        }));
       }
-      
-      // Filter by file pattern if specified
-      if (args.file) {
-        filtered = filtered.filter(m => 
-          m.metadata.file && m.metadata.file.includes(args.file)
-        );
-      }
-      
-      // Limit results
-      const limited = filtered.slice(0, args.limit);
-      
-      // Convert to streaming results
-      return limited.map(memory => ({
-        symbol: this.memoryToSymbol(memory),
-        score: 1.0, // Exact match
-        matches: [{
-          field: 'name',
-          highlight: memory.metadata.symbolName as string,
-        }],
-      }));
     } catch (error) {
       console.error('Error finding symbol:', error);
       return [];
@@ -590,5 +753,136 @@ export class CodeIntelligenceTools {
     
     // Default: return the original query
     return query;
+  }
+  
+  /**
+   * Search files by name, extension, or directory
+   */
+  private async searchFiles(args: {
+    name?: string;
+    extension?: string;
+    directory?: string;
+    fileType?: 'code' | 'config' | 'documentation' | 'asset' | 'test' | 'other';
+    limit?: number;
+  }): Promise<any> {
+    try {
+      // Check if we're using hybrid storage with file repository
+      if (!(this.memoryManager instanceof HybridMemoryManager)) {
+        throw new Error('File search requires hybrid storage mode');
+      }
+      
+      const fileRepo = (this.memoryManager as HybridMemoryManager).getFileRepository();
+      if (!fileRepo) {
+        throw new Error('File repository not initialized');
+      }
+      
+      // Search for files
+      const files = await fileRepo.search({
+        name: args.name,
+        extension: args.extension,
+        directory: args.directory,
+        file_type: args.fileType,
+        limit: args.limit || 50,
+        includeDirectories: false
+      });
+      
+      // Format results
+      const results = files.map(file => ({
+        path: file.file_path,
+        name: file.file_name,
+        directory: file.directory_path,
+        extension: file.extension,
+        type: file.file_type,
+        size: file.size_bytes,
+        modified: file.file_modified,
+        symbolCount: file.contains_symbols,
+        importsCount: file.imports_count,
+        importedByCount: file.imported_by_count
+      }));
+      
+      return {
+        count: results.length,
+        files: results,
+        query: args
+      };
+    } catch (error) {
+      throw new Error(`File search failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  
+  /**
+   * Explore folder contents
+   */
+  private async exploreFolder(args: {
+    path: string;
+    recursive?: boolean;
+    showStats?: boolean;
+  }): Promise<any> {
+    try {
+      // Check if we're using hybrid storage with file repository
+      if (!(this.memoryManager instanceof HybridMemoryManager)) {
+        throw new Error('Folder exploration requires hybrid storage mode');
+      }
+      
+      const fileRepo = (this.memoryManager as HybridMemoryManager).getFileRepository();
+      if (!fileRepo) {
+        throw new Error('File repository not initialized');
+      }
+      
+      // Get directory contents
+      const contents = await fileRepo.getDirectoryContents(
+        args.path,
+        undefined, // No specific project ID
+        args.recursive || false
+      );
+      
+      // Separate directories and files
+      const directories = contents.filter(f => f.is_directory);
+      const files = contents.filter(f => !f.is_directory);
+      
+      // Calculate statistics if requested
+      let stats = null;
+      if (args.showStats !== false) {
+        const filesByType: Record<string, number> = {};
+        let totalSize = 0;
+        let totalSymbols = 0;
+        
+        for (const file of files) {
+          const type = file.file_type || 'other';
+          filesByType[type] = (filesByType[type] || 0) + 1;
+          totalSize += file.size_bytes || 0;
+          totalSymbols += file.contains_symbols || 0;
+        }
+        
+        stats = {
+          totalFiles: files.length,
+          totalDirectories: directories.length,
+          totalSize,
+          totalSymbols,
+          filesByType
+        };
+      }
+      
+      // Format results
+      const formatItem = (item: any) => ({
+        name: item.file_name,
+        path: item.file_path,
+        type: item.is_directory ? 'directory' : item.file_type,
+        size: item.size_bytes,
+        modified: item.file_modified,
+        symbols: item.contains_symbols,
+        depth: item.depth
+      });
+      
+      return {
+        path: args.path,
+        directories: directories.map(formatItem),
+        files: files.map(formatItem),
+        stats,
+        recursive: args.recursive || false
+      };
+    } catch (error) {
+      throw new Error(`Folder exploration failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 }

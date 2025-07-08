@@ -176,8 +176,7 @@ export class VaultStructureManager {
       const structure = JSON.parse(data);
       await this.initializeStructure(structure);
     } catch (error) {
-      // No existing structure, that's okay
-      console.log('No existing vault structure found, starting fresh');
+      // No existing structure, that's okay - starting fresh
     }
   }
 
@@ -224,7 +223,7 @@ export class VaultStructureManager {
     };
 
     if (options.dryRun) {
-      console.log('DRY RUN: No changes will be made');
+      // DRY RUN: No changes will be made
     }
 
     // Create root structure

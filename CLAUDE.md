@@ -12,7 +12,7 @@ The platform is designed to:
 - Provide multi-project support with instant context switching
 - Enable team knowledge sharing and collaboration
 
-See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20State%20Management.md) for the complete vision.
+See [Platform Approach](./Project_Context/Architecture/Platform%20Approach%20-%20Cognitive%20State%20Management.md) for the complete vision.
 
 ## Startup Procedure
 
@@ -35,7 +35,7 @@ You'll see a startup summary in the console showing:
 - 💡 **Recommendations**: System optimization suggestions
 
 ### 3. Vault Index Generation
-The system automatically generates/updates `Project_Context/vault/VAULT_INDEX.md` which contains:
+The system automatically generates/updates `Project_Context/VAULT_INDEX.md` which contains:
 - Real-time system health dashboard
 - Memory system statistics
 - Active context and recent sessions
@@ -227,9 +227,9 @@ npm run docker:build
 npm run docker:run
 
 # For dual-instance development
-./scripts/env-manager.sh start-dev  # Start development environment
-./scripts/env-manager.sh stop-dev   # Stop development environment
-./scripts/env-manager.sh status     # Check status of both environments
+./scripts/environment/env-manager.sh start-dev  # Start development environment
+./scripts/environment/env-manager.sh stop-dev   # Stop development environment
+./scripts/environment/env-manager.sh status     # Check status of both environments
 ```
 
 ### Starting ChromaDB
@@ -240,7 +240,7 @@ From the project directory:
 docker-compose up -d chromadb
 
 # For development testing
-./scripts/env-manager.sh start-dev
+./scripts/environment/env-manager.sh start-dev
 ```
 
 ## Testing
@@ -285,14 +285,36 @@ CODE_SYMBOL_CONTEXT_LINES=15
 
 **Note**: Code intelligence features are currently in development and should be tested in the DEVELOPMENT environment first.
 
+## Document Storage Guidelines
+
+When creating or saving documents in this project, follow these guidelines:
+
+### Quick Storage Rules
+- **Development work** → `Project_Context/Development/`
+- **Technical designs** → `Project_Context/Architecture/`
+- **How-to guides** → `Project_Context/Knowledge/`
+- **Future plans** → `Project_Context/Planning/`
+- **External docs** → `Project_Context/References/`
+- **Old documents** → `Project_Context/Archive/`
+
+### For Claude: Where to Save Documents
+When creating new documents, determine the type and save accordingly:
+1. Implementation summaries, refactoring notes → `Development/`
+2. System design, technical specs → `Architecture/`
+3. Guides, best practices, learned knowledge → `Knowledge/`
+4. Roadmaps, feature plans → `Planning/roadmaps/`
+5. API docs, external references → `References/`
+
+**See the complete guide**: `Project_Context/Knowledge/DOCUMENT_STORAGE_GUIDE.md`
+
 ## Additional Documentation
 
 For setup guides and detailed documentation, see:
-- **Code Intelligence Guide**: `CODE_INTELLIGENCE_GUIDE.md` - Using code-aware features
-- **Memory Usage Guide**: `MEMORY_USAGE_GUIDE.md` - How to effectively use the memory system
-- **Dual Instance Setup**: `Project_Context/DUAL_INSTANCE_SETUP.md` - Development environment isolation
-- **Development Status**: `DEVELOPMENT_STATUS.md` - Current progress and next steps
-- **Setup Guides**: `Project_Context/vault/Knowledge/Setup/`
-- **Architecture Decisions**: `Project_Context/vault/Architecture/`
-- **Historical Documents**: `Project_Context/vault/Archive/`
-- **Session Logs**: `Project_Context/vault/Sessions/`
+- **Code Intelligence Guide**: `docs/guides/code-intelligence.md` - Using code-aware features
+- **Memory Usage Guide**: `docs/guides/memory-usage.md` - How to effectively use the memory system
+- **Dual Instance Setup**: `Project_Context/Development/DUAL_INSTANCE_SETUP.md` - Development environment isolation
+- **Development Status**: `docs/roadmap/current-status.md` - Current progress and next steps
+- **Setup Guides**: `Project_Context/Knowledge/Setup/`
+- **Architecture Decisions**: `Project_Context/Architecture/decisions/`
+- **Historical Documents**: `Project_Context/Archive/`
+- **Session Logs**: `Project_Context/Sessions/`
