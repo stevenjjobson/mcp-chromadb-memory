@@ -59,6 +59,13 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 - 🔄 **Dual-Write Migration** - Safe migration with writes to both databases, configurable read ratios ✅
 - ⚡ **No Throttling** - Bulk operations complete in <1s vs 60s+ with ChromaDB alone ✅
 
+#### Platform Implementations
+- 🎯 **CoachNTT** - Specialized conversational AI implementation with voice synthesis and VSCode integration
+  - AI-powered text-to-speech with ElevenLabs
+  - Rich VSCode extension with audio controls
+  - Conversation-aware memory scoring
+  - See [CoachNTT Documentation](./CoachNTT/README.md)
+
 #### Platform Enhancements (Coming Soon)
 - 🧬 **Advanced Pattern Recognition** - Deep learning from development patterns across projects
 - 🔄 **Memory Consolidation** - Intelligent deduplication and memory merging
@@ -80,6 +87,7 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 - **[Code Intelligence Guide](./CODE_INTELLIGENCE_GUIDE.md)** - Code-aware features and symbol indexing
 - **[Dual Instance Setup](./Project_Context/DUAL_INSTANCE_SETUP.md)** - Set up isolated development environment
 - **[Development Status](./Project_Context/DEVELOPMENT_STATUS.md)** - Current progress and roadmap
+- **[CoachNTT Implementation](./CoachNTT/README.md)** - Conversational AI with voice synthesis
 
 ## 🚀 Quick Start
 

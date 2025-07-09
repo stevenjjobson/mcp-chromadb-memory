@@ -16,7 +16,9 @@
       "Bash(grep:*)",
       "Bash(node:*)",
       "Bash(git checkout:*)",
-      "Bash(./scripts/env-manager.sh:*)"
+      "Bash(./scripts/env-manager.sh:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

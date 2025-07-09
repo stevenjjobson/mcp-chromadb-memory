@@ -1,0 +1,39 @@
+FROM node:20-alpine
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# Copy package files
+COPY package-coachntt.json package.json
+COPY package-lock.json* ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy source files
+COPY tsconfig.json ./
+COPY src/ ./src/
+
+# Build TypeScript
+RUN npm run build:coachntt
+
+# Create necessary directories
+RUN mkdir -p /app/data
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "console.log('Health check passed')" || exit 1
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV MCP_SERVER_NAME=CoachNTT
+
+# Run as non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+USER nodejs
+
+# Start the server
+CMD ["node", "dist/index-coachntt.js"]

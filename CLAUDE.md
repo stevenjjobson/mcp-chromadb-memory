@@ -302,6 +302,27 @@ POSTGRES_READ_RATIO=0.5  # 50/50 split for gradual migration
 
 **Performance**: Code indexing now runs at 1700+ symbols/second with no throttling, thanks to PostgreSQL bulk operations.
 
+## CoachNTT Implementation
+
+**CoachNTT** is a specialized implementation of this platform focused on conversational AI with voice capabilities:
+
+- **Location**: `CoachNTT/` directory with separated MCP server and VSCode extension
+- **Features**: 
+  - Audio synthesis via ElevenLabs API (server-side)
+  - Rich VSCode extension with audio playback controls
+  - Conversation-aware memory scoring
+  - Comprehensive UI based on ASCII wireframe contracts
+- **Architecture**:
+  - `CoachNTT/mcp-server/` - Backend MCP service with audio synthesis
+  - `CoachNTT/vscode-extension/` - Frontend UI with audio playback
+  - `CoachNTT/shared/` - Shared TypeScript types
+- **Audio Tools**:
+  - `synthesize_audio` - Convert text to speech with configurable voices
+  - `get_available_voices` - List ElevenLabs voices
+  - `check_audio_quota` - Monitor API usage
+
+See [CoachNTT Documentation](./CoachNTT/README.md) for complete details.
+
 ## Document Storage Guidelines
 
 When creating or saving documents in this project, follow these guidelines:

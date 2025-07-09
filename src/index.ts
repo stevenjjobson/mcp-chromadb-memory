@@ -43,6 +43,7 @@ import {
 } from './types/vault-index.types.js';
 import { CodeIntelligenceTools } from './tools/code-intelligence-tools.js';
 import { sanitizeMetadata } from './utils/metadata-validator.js';
+import { ToolRegistry } from './tools/tool-registry.js';
 
 // Handle Windows-specific process signals
 if (process.platform === "win32") {
@@ -85,10 +86,18 @@ let vaultFileWatcher: VaultFileWatcher | null = null;
 let migrationService: MigrationService | null = null;
 let codeIntelligenceTools: CodeIntelligenceTools | null = null;
 
+// Initialize tool registry
+const toolRegistry = new ToolRegistry();
+
 // Update the tools list in ListToolsRequestSchema handler
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-  // Build tools list dynamically to include enhanced features
-  const tools: any[] = [
+  // Use tool registry to get all available tools
+  return {
+    tools: toolRegistry.getTools()
+  };
+});
+
+// [Old handler code removed - replaced with ToolRegistry]
       {
         name: 'health_check',
         description: 'Check if the memory server is running correctly',
@@ -2340,6 +2349,7 @@ async function main() {
     
     // Initialize code intelligence tools
     codeIntelligenceTools = new CodeIntelligenceTools(memoryManager);
+    toolRegistry.registerService('codeIntelligenceTools', codeIntelligenceTools);
     console.error('Code intelligence tools initialized');
     
     // Initialize migration service if tiers are enabled
@@ -2360,6 +2370,7 @@ async function main() {
       // Initialize vault manager
       vaultManager = new VaultManager(obsidianManager);
       await vaultManager.initialize();
+      toolRegistry.registerService('vaultManager', vaultManager);
       console.error('Vault manager initialized successfully');
       
       // Initialize state manager
@@ -2371,6 +2382,7 @@ async function main() {
           compressionEnabled: process.env.STATE_COMPRESSION !== 'false'
         });
         await stateManager.initialize();
+        toolRegistry.registerService('stateManager', stateManager);
         console.error('State manager initialized successfully');
       }
       
@@ -2384,6 +2396,7 @@ async function main() {
           allowedSources: process.env.TEMPLATE_ALLOWED_SOURCES?.split(',').map(s => s.trim())
         });
         await templateManager.initialize();
+        toolRegistry.registerService('templateManager', templateManager);
         console.error('Template manager initialized successfully');
         
         // Initialize structure manager

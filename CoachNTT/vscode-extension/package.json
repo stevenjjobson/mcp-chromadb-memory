@@ -1,0 +1,292 @@
+{
+  "name": "coachntt-vscode",
+  "displayName": "CoachNTT - AI Coding Assistant",
+  "description": "Conversational AI assistant with memory and voice capabilities for intelligent codebase discussions",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["AI", "Other"],
+  "keywords": ["ai", "assistant", "memory", "voice", "mcp", "claude"],
+  "icon": "resources/icon.png",
+  "publisher": "coachntt",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/coachntt/coachntt-vscode"
+  },
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "coachntt.connect",
+        "title": "CoachNTT: Connect to Server"
+      },
+      {
+        "command": "coachntt.disconnect",
+        "title": "CoachNTT: Disconnect from Server"
+      },
+      {
+        "command": "coachntt.configureServer",
+        "title": "CoachNTT: Configure Server Settings"
+      },
+      {
+        "command": "coachntt.showMemoryPanel",
+        "title": "CoachNTT: Show Memory Panel"
+      },
+      {
+        "command": "coachntt.storeMemory",
+        "title": "CoachNTT: Store Selection as Memory"
+      },
+      {
+        "command": "coachntt.searchMemories",
+        "title": "CoachNTT: Search Memories"
+      },
+      {
+        "command": "coachntt.showMemoryStats",
+        "title": "CoachNTT: Show Memory Statistics"
+      },
+      {
+        "command": "coachntt.exportMemoryDatabase",
+        "title": "CoachNTT: Export Memory Database"
+      },
+      {
+        "command": "coachntt.clearWorkingTier",
+        "title": "CoachNTT: Clear Working Tier"
+      },
+      {
+        "command": "coachntt.audio.speakSelection",
+        "title": "CoachNTT: Speak Selection",
+        "icon": "$(unmute)"
+      },
+      {
+        "command": "coachntt.audio.speakCurrentFile",
+        "title": "CoachNTT: Speak Current File"
+      },
+      {
+        "command": "coachntt.audio.togglePlayback",
+        "title": "CoachNTT: Play/Pause Audio"
+      },
+      {
+        "command": "coachntt.audio.showControls",
+        "title": "CoachNTT: Show Audio Controls"
+      },
+      {
+        "command": "coachntt.audio.configureVoice",
+        "title": "CoachNTT: Configure Voice Settings"
+      },
+      {
+        "command": "coachntt.session.startNew",
+        "title": "CoachNTT: Start New Session"
+      },
+      {
+        "command": "coachntt.session.endCurrent",
+        "title": "CoachNTT: End Current Session"
+      },
+      {
+        "command": "coachntt.session.viewHistory",
+        "title": "CoachNTT: View Session History"
+      }
+    ],
+    "views": {
+      "coachntt": [
+        {
+          "id": "coachntt.memories",
+          "name": "Memories",
+          "icon": "$(database)",
+          "contextualTitle": "CoachNTT Memories"
+        },
+        {
+          "id": "coachntt.audioQueue",
+          "name": "Audio Queue",
+          "icon": "$(play-circle)",
+          "contextualTitle": "Audio Queue",
+          "visibility": "collapsed"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "coachntt",
+          "title": "CoachNTT",
+          "icon": "resources/activity-bar-icon.svg"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "coachntt.memories",
+        "contents": "No memories found.\n[Store Memory](command:coachntt.storeMemory)\n[Search Memories](command:coachntt.searchMemories)"
+      }
+    ],
+    "configuration": {
+      "title": "CoachNTT",
+      "properties": {
+        "coachntt.server.host": {
+          "type": "string",
+          "default": "localhost",
+          "description": "CoachNTT MCP server host"
+        },
+        "coachntt.server.port": {
+          "type": "number",
+          "default": 3000,
+          "description": "CoachNTT MCP server port"
+        },
+        "coachntt.server.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-connect on startup"
+        },
+        "coachntt.server.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for server authentication"
+        },
+        "coachntt.audio.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable audio features"
+        },
+        "coachntt.audio.autoPlay": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically play audio responses"
+        },
+        "coachntt.audio.defaultVolume": {
+          "type": "number",
+          "default": 0.8,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Default audio volume (0-1)"
+        },
+        "coachntt.audio.defaultSpeed": {
+          "type": "number",
+          "default": 1.0,
+          "minimum": 0.5,
+          "maximum": 2.0,
+          "description": "Default playback speed"
+        },
+        "coachntt.audio.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show audio controls in status bar"
+        },
+        "coachntt.audio.queueBehavior": {
+          "type": "string",
+          "enum": ["append", "replace", "interrupt"],
+          "default": "append",
+          "description": "Audio queue behavior"
+        },
+        "coachntt.audio.cacheAudio": {
+          "type": "boolean",
+          "default": true,
+          "description": "Cache synthesized audio"
+        },
+        "coachntt.audio.maxCacheSize": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum audio cache size in MB"
+        },
+        "coachntt.memory.autoStore": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically store important code snippets as memories"
+        },
+        "coachntt.memory.importanceThreshold": {
+          "type": "number",
+          "default": 0.3,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum importance score for auto-storing memories"
+        },
+        "coachntt.memory.searchType": {
+          "type": "string",
+          "enum": ["semantic", "exact", "hybrid"],
+          "default": "hybrid",
+          "description": "Default memory search type"
+        },
+        "coachntt.memory.workingTierDuration": {
+          "type": "number",
+          "default": 48,
+          "description": "Working tier duration in hours"
+        },
+        "coachntt.memory.sessionTierDuration": {
+          "type": "number",
+          "default": 14,
+          "description": "Session tier duration in days"
+        },
+        "coachntt.memory.autoMigrate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-migrate memories between tiers"
+        },
+        "coachntt.ui.theme": {
+          "type": "string",
+          "enum": ["light", "dark", "auto"],
+          "default": "auto",
+          "description": "UI theme preference"
+        },
+        "coachntt.ui.showActivityBarIcon": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show activity bar icon"
+        },
+        "coachntt.ui.showInlineDecorations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline code decorations"
+        },
+        "coachntt.ui.compactMemoryView": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use compact memory view"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "coachntt.storeMemory",
+          "when": "editorHasSelection",
+          "group": "coachntt@1"
+        },
+        {
+          "command": "coachntt.audio.speakSelection",
+          "when": "editorHasSelection && config.coachntt.audio.enabled",
+          "group": "coachntt@2"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "coachntt.searchMemories",
+          "when": "view == coachntt.memories",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "@vscode/test-electron": "^2.3.8",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.15.0",
+    "ws": "^8.16.0"
+  }
+}
