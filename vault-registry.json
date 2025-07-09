@@ -4,15 +4,16 @@
   "vaults": {
     "vault_1751851868520_e87wbfsrf": {
       "id": "vault_1751851868520_e87wbfsrf",
-      "name": "Default Vault",
-      "path": "./Project_Context/vault/Development",
-      "type": "personal",
+      "name": "MCP ChromaDB Memory Project",
+      "path": "./Project_Context",
+      "type": "project",
       "created": "2025-07-07T01:31:08.520Z",
-      "lastAccessed": "2025-07-07T01:31:08.520Z",
-      "lastModified": "2025-07-07T01:31:08.520Z",
+      "lastAccessed": "2025-01-09T12:00:00.000Z",
+      "lastModified": "2025-01-09T12:00:00.000Z",
       "isActive": true,
       "metadata": {
-        "source": "obsidian"
+        "source": "obsidian",
+        "description": "Project knowledge base and session logs for MCP ChromaDB Memory Server"
       }
     }
   },

@@ -133,10 +133,11 @@ export class CodeIntelligenceTools {
     excludePatterns?: string[];
     shallow?: boolean;
   }): Promise<IndexingStats> {
-    const stats: IndexingStats = {
-      filesProcessed: 0,
-      symbolsIndexed: 0,
-      patternsDetected: 0,
+    try {
+      const stats: IndexingStats = {
+        filesProcessed: 0,
+        symbolsIndexed: 0,
+        patternsDetected: 0,
       duration: 0,
       errors: [],
       breakdown: {},
@@ -225,7 +226,7 @@ export class CodeIntelligenceTools {
                 size_bytes: fileStat.size,
                 parent_directory: path.dirname(file),
                 file_modified: fileStat.mtime,
-                project_id: args.path // Use root path as project ID for now
+                // project_id is optional, leave it undefined for now
               });
               
               // Parse the file for symbols
@@ -259,36 +260,36 @@ export class CodeIntelligenceTools {
             if (isHybrid) {
               allSymbols.push(...symbols);
             }
-          }
-          
-          // Also prepare for ChromaDB format (fallback)
-          for (const symbol of symbols) {
-            try {
-              // Create memory content with symbol information
-              const content = this.createSymbolMemoryContent(symbol);
-              
-              // Add to batch
-              symbolBatch.push({
-                content,
-                context: 'code_symbol' as CodeContext,
-                metadata: {
-                  symbolId: symbol.id,
-                  symbolName: symbol.name,
-                  symbolType: symbol.type,
-                  file: symbol.file,
-                  line: symbol.line,
-                  language: symbol.language,
-                  isExported: symbol.exports || false,
-                  signature: symbol.signature,
-                }
-              });
-              
-            } catch (error) {
-              console.error(`Error preparing symbol ${symbol.name}:`, error);
-              stats.errors.push({
-                file,
-                error: `Failed to prepare symbol ${symbol.name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-              });
+            
+            // Also prepare for ChromaDB format (fallback)
+            for (const symbol of symbols) {
+              try {
+                // Create memory content with symbol information
+                const content = this.createSymbolMemoryContent(symbol);
+                
+                // Add to batch
+                symbolBatch.push({
+                  content,
+                  context: 'code_symbol' as CodeContext,
+                  metadata: {
+                    symbolId: symbol.id,
+                    symbolName: symbol.name,
+                    symbolType: symbol.type,
+                    file: symbol.file,
+                    line: symbol.line,
+                    language: symbol.language,
+                    isExported: symbol.exports || false,
+                    signature: symbol.signature,
+                  }
+                });
+                
+              } catch (error) {
+                console.error(`Error preparing symbol ${symbol.name}:`, error);
+                stats.errors.push({
+                  file,
+                  error: `Failed to prepare symbol ${symbol.name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                });
+              }
             }
           }
         } catch (error) {
@@ -360,6 +361,9 @@ export class CodeIntelligenceTools {
       stats.duration = Date.now() - startTime;
       
       return stats;
+    } catch (error) {
+      throw new Error(`Failed to index codebase: ${error instanceof Error ? error.message : String(error)}`);
+    }
     } catch (error) {
       throw new Error(`Failed to index codebase: ${error instanceof Error ? error.message : String(error)}`);
     }

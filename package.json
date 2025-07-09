@@ -40,6 +40,7 @@
   },
   "homepage": "https://github.com/stevenjjobson/mcp-chromadb-memory#readme",
   "dependencies": {
+    "@chroma-core/default-embed": "^0.1.5",
     "@modelcontextprotocol/sdk": "^1.15.0",
     "@types/pg": "^8.15.4",
     "boxen": "^7.1.1",

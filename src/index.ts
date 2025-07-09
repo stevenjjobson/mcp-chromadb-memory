@@ -87,8 +87,8 @@ let codeIntelligenceTools: CodeIntelligenceTools | null = null;
 
 // Update the tools list in ListToolsRequestSchema handler
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
+  // Build tools list dynamically to include enhanced features
+  const tools: any[] = [
       {
         name: 'health_check',
         description: 'Check if the memory server is running correctly',
@@ -850,8 +850,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['stateId1', 'stateId2']
         },
       },
-      // Code Intelligence Tools (conditionally added)
-      ...(codeIntelligenceTools ? codeIntelligenceTools.getTools().map(tool => ({
+    ];
+    
+    // Dynamically add Code Intelligence Tools if initialized
+    if (codeIntelligenceTools) {
+      const ciTools = codeIntelligenceTools.getTools().map(tool => ({
         name: tool.name,
         description: tool.description,
         inputSchema: {
@@ -873,9 +876,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             .filter(([_, schema]: [string, any]) => !schema.isOptional())
             .map(([key]) => key)
         }
-      })) : [])
-    ],
-  };
+      }));
+      tools.push(...ciTools);
+    }
+    
+    return { tools };
 });
 
 // Update CallToolRequestSchema handler to handle new tools
@@ -2038,7 +2043,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'find_symbol':
       case 'get_symbol_context':
       case 'analyze_code_patterns':
-      case 'search_code_natural': {
+      case 'search_code_natural':
+      case 'find_files':
+      case 'explore_folder': {
         if (!codeIntelligenceTools) {
           throw new Error('Code intelligence tools not initialized');
         }
