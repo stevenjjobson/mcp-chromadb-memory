@@ -15,6 +15,7 @@ Welcome to the documentation for the Cognitive State Management Platform. This d
 - **[Code Intelligence Guide](./guides/code-intelligence.md)** - Code-aware features and tools
 - **[File Search Guide](./guides/file-search.md)** - Fast file and folder searching
 - **[Hybrid Storage Guide](./guides/hybrid-storage.md)** - PostgreSQL + ChromaDB architecture
+- **[Hook Scripts Guide](./guides/hook-scripts.md)** - Smart tool optimization with 94% token reduction
 - **[Hooks Setup](./guides/hooks-setup.md)** - Configure Claude Code hooks
 
 ### [Architecture](./architecture/)

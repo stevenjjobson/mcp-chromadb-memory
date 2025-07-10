@@ -345,9 +345,18 @@ When creating new documents, determine the type and save accordingly:
 
 **See the complete guide**: `Project_Context/Knowledge/DOCUMENT_STORAGE_GUIDE.md`
 
+## Hook Scripts for Optimized Tool Usage
+
+This project includes intelligent hook scripts that optimize your tool usage:
+- **Code searches**: Automatically suggests `find_symbol` instead of `Grep` for 98% faster searches
+- **File searches**: Suggests `index_codebase` for code files, reducing tokens by 94%
+
+The hooks are configured in your Claude Code environment and work automatically. See [Hook Scripts Guide](./docs/guides/hook-scripts.md) for details.
+
 ## Additional Documentation
 
 For setup guides and detailed documentation, see:
+- **Hook Scripts Guide**: `docs/guides/hook-scripts.md` - Smart tool optimization with 94% token reduction
 - **Code Intelligence Guide**: `docs/guides/code-intelligence.md` - Using code-aware features
 - **Memory Usage Guide**: `docs/guides/memory-usage.md` - How to effectively use the memory system
 - **Dual Instance Setup**: `Project_Context/Development/DUAL_INSTANCE_SETUP.md` - Development environment isolation
