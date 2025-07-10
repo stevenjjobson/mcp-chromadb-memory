@@ -278,7 +278,36 @@ When testing the memory server:
 ## Claude Desktop Setup
 
 The MCP server is configured in `%APPDATA%\Claude\claude_desktop_config.json` on Windows.
-See CLAUDE_DESKTOP_SETUP.md for detailed configuration instructions.
+See CLAUDE_DESKTOP_CONFIG_GUIDE.md for detailed configuration instructions.
+
+## Claude Code CLI Setup
+
+Claude Code CLI uses a different configuration method than Claude Desktop:
+
+1. **Quick Setup**: Run the setup script
+   ```bash
+   ./scripts/setup-claude-code-mcp.sh
+   ```
+
+2. **Manual Setup**: Use the included `.mcp.json` file
+   - The project includes `.mcp.json` with both Docker and local configurations
+   - Claude Code will automatically detect it when you run `claude` from the project directory
+   - You'll be prompted to approve it on first use
+
+3. **Custom Setup**: Configure manually
+   ```bash
+   # Docker setup
+   claude mcp add memory docker run -i --rm \
+     --network mcp-chromadb-memory_memory-network \
+     -e OPENAI_API_KEY=$OPENAI_API_KEY \
+     mcp-chromadb-memory-mcp-memory
+
+   # Local setup
+   claude mcp add memory-local node dist/index.js \
+     -e OPENAI_API_KEY=$OPENAI_API_KEY
+   ```
+
+See CLAUDE_CODE_VS_DESKTOP_CONFIG.md for complete details on the differences between Claude Desktop and Claude Code configurations.
 
 ## Code Intelligence Configuration
 
