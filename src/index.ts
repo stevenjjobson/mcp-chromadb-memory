@@ -28,6 +28,8 @@ import { ObsidianManager } from './obsidian-manager.js';
 import { SessionLogger } from './session-logger.js';
 import { TemplateManager } from './template-manager.js';
 import { VaultManager } from './vault-manager.js';
+import { DualVaultManager } from './vault-manager-dual.js';
+import { TemplateService } from './services/template-service.js';
 import { StateManager } from './state-manager.js';
 import { VaultStructureManager } from './vault-structure-manager.js';
 import { VaultIndexService } from './services/vault-index-service.js';
@@ -2359,10 +2361,58 @@ async function main() {
       console.error('Migration service started');
     }
     
-    // Initialize Obsidian manager if vault path is configured
-    const vaultPath = process.env.OBSIDIAN_VAULT_PATH;
-    if (vaultPath) {
-      console.error(`Initializing Obsidian manager with vault: ${vaultPath}`);
+    // Initialize vault system based on configuration
+    if (config.vaultMode === 'dual' && config.coreVaultPath && config.projectVaultPath) {
+      // Dual vault mode
+      console.error('Initializing dual vault system...');
+      
+      // Initialize core vault ObsidianManager
+      const coreObsidianManager = new ObsidianManager(config.coreVaultPath, memoryManager.getChromaClient());
+      await coreObsidianManager.initialize();
+      console.error(`Core vault initialized: ${config.coreVaultPath}`);
+      
+      // Initialize project vault ObsidianManager
+      const projectObsidianManager = new ObsidianManager(config.projectVaultPath, memoryManager.getChromaClient());
+      await projectObsidianManager.initialize();
+      console.error(`Project vault initialized: ${config.projectVaultPath}`);
+      
+      // Initialize DualVaultManager
+      const dualVaultManager = new DualVaultManager(
+        projectObsidianManager,
+        {
+          coreVaultPath: config.coreVaultPath,
+          projectVaultPath: config.projectVaultPath,
+          vaultMode: 'dual',
+          defaultContext: config.defaultVaultContext,
+          enableCrossVaultSearch: config.enableCrossVaultSearch,
+          searchStrategy: config.vaultSearchStrategy,
+          weights: {
+            core: config.coreVaultWeight,
+            project: config.projectVaultWeight
+          }
+        },
+        coreObsidianManager
+      );
+      await dualVaultManager.initialize();
+      
+      // Initialize template service for core vault
+      const templateService = new TemplateService();
+      await templateService.ensureTemplatesExist(config.coreVaultPath);
+      console.error('Template service initialized');
+      
+      // Use dualVaultManager as the main vault manager
+      vaultManager = dualVaultManager as any; // Type compatibility
+      obsidianManager = projectObsidianManager; // Default to project for backward compatibility
+      
+      toolRegistry.registerService('vaultManager', vaultManager);
+      toolRegistry.registerService('dualVaultManager', dualVaultManager);
+      toolRegistry.registerService('templateService', templateService);
+      console.error('Dual vault system initialized successfully');
+      
+    } else if (process.env.OBSIDIAN_VAULT_PATH) {
+      // Single vault mode (backward compatibility)
+      const vaultPath = process.env.OBSIDIAN_VAULT_PATH;
+      console.error(`Initializing single vault manager with vault: ${vaultPath}`);
       obsidianManager = new ObsidianManager(vaultPath, memoryManager.getChromaClient());
       await obsidianManager.initialize();
       console.error('Obsidian manager initialized successfully');
@@ -2372,41 +2422,40 @@ async function main() {
       await vaultManager.initialize();
       toolRegistry.registerService('vaultManager', vaultManager);
       console.error('Vault manager initialized successfully');
+    }
       
-      // Initialize state manager
-      if (vaultManager && memoryManager) {
-        console.error('Initializing state manager...');
-        stateManager = new StateManager(vaultManager, memoryManager, {
-          statesPath: '.states',
-          maxStatesPerVault: parseInt(process.env.MAX_STATES_PER_VAULT || '100'),
-          compressionEnabled: process.env.STATE_COMPRESSION !== 'false'
-        });
-        await stateManager.initialize();
-        toolRegistry.registerService('stateManager', stateManager);
-        console.error('State manager initialized successfully');
-      }
+    // Initialize state manager
+    if (vaultManager && memoryManager) {
+      console.error('Initializing state manager...');
+      stateManager = new StateManager(vaultManager, memoryManager, {
+        statesPath: '.states',
+        maxStatesPerVault: parseInt(process.env.MAX_STATES_PER_VAULT || '100'),
+        compressionEnabled: process.env.STATE_COMPRESSION !== 'false'
+      });
+      await stateManager.initialize();
+      toolRegistry.registerService('stateManager', stateManager);
+      console.error('State manager initialized successfully');
+    }
+    
+    // Initialize template manager
+    if (vaultManager && obsidianManager) {
+      console.error('Initializing template manager...');
+      const currentVaultPath = config.vaultMode === 'dual' ? config.projectVaultPath : process.env.OBSIDIAN_VAULT_PATH;
+      templateManager = new TemplateManager(vaultManager, {
+        cacheDir: path.join(currentVaultPath || '.', '.template-cache'),
+        maxTemplateSize: parseInt(process.env.TEMPLATE_MAX_SIZE || '1048576'), // 1MB default
+        securityScan: process.env.TEMPLATE_SECURITY_SCAN !== 'false',
+        allowedSources: process.env.TEMPLATE_ALLOWED_SOURCES?.split(',').map(s => s.trim())
+      });
+      await templateManager.initialize();
+      toolRegistry.registerService('templateManager', templateManager);
+      console.error('Template manager initialized successfully');
       
-      // Initialize template manager
-      if (vaultManager) {
-        console.error('Initializing template manager...');
-        templateManager = new TemplateManager(vaultManager, {
-          cacheDir: path.join(vaultPath, '.template-cache'),
-          maxTemplateSize: parseInt(process.env.TEMPLATE_MAX_SIZE || '1048576'), // 1MB default
-          securityScan: process.env.TEMPLATE_SECURITY_SCAN !== 'false',
-          allowedSources: process.env.TEMPLATE_ALLOWED_SOURCES?.split(',').map(s => s.trim())
-        });
-        await templateManager.initialize();
-        toolRegistry.registerService('templateManager', templateManager);
-        console.error('Template manager initialized successfully');
-        
-        // Initialize structure manager
-        console.error('Initializing vault structure manager...');
-        structureManager = new VaultStructureManager(templateManager, vaultManager);
-        await structureManager.initialize();
-        console.error('Vault structure manager initialized successfully');
-      }
-    } else {
-      console.error('Obsidian vault path not configured, skipping Obsidian integration');
+      // Initialize structure manager
+      console.error('Initializing vault structure manager...');
+      structureManager = new VaultStructureManager(templateManager, vaultManager);
+      await structureManager.initialize();
+      console.error('Vault structure manager initialized successfully');
     }
     
     // Auto-start session logging if configured
