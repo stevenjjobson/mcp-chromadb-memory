@@ -8,7 +8,7 @@
   },
   "categories": ["AI", "Other"],
   "keywords": ["ai", "assistant", "memory", "voice", "mcp", "claude"],
-  "icon": "resources/icon.png",
+  "icon": "media/Icon.png",
   "publisher": "coachntt",
   "repository": {
     "type": "git",
@@ -140,7 +140,56 @@
         "coachntt.server.apiKey": {
           "type": "string",
           "default": "",
-          "description": "API key for server authentication"
+          "description": "API key for server authentication",
+          "markdownDescription": "API key for server authentication (if required)"
+        },
+        "coachntt.server.openaiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API key for embeddings",
+          "markdownDescription": "OpenAI API key for generating embeddings. Required for memory functionality."
+        },
+        "coachntt.server.elevenLabsApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "ElevenLabs API key for audio synthesis",
+          "markdownDescription": "ElevenLabs API key for text-to-speech synthesis. Required for audio features."
+        },
+        "coachntt.server.chromaHost": {
+          "type": "string",
+          "default": "localhost",
+          "description": "ChromaDB host"
+        },
+        "coachntt.server.chromaPort": {
+          "type": "string",
+          "default": "8000",
+          "description": "ChromaDB port"
+        },
+        "coachntt.server.postgresHost": {
+          "type": "string",
+          "default": "localhost",
+          "description": "PostgreSQL host"
+        },
+        "coachntt.server.postgresPort": {
+          "type": "string",
+          "default": "5432",
+          "description": "PostgreSQL port"
+        },
+        "coachntt.server.postgresDb": {
+          "type": "string",
+          "default": "memory_db",
+          "description": "PostgreSQL database name"
+        },
+        "coachntt.server.postgresUser": {
+          "type": "string",
+          "default": "postgres",
+          "description": "PostgreSQL username"
+        },
+        "coachntt.server.postgresPassword": {
+          "type": "string",
+          "default": "postgres",
+          "description": "PostgreSQL password",
+          "markdownDescription": "PostgreSQL password. Consider using environment variables for production."
         },
         "coachntt.audio.enabled": {
           "type": "boolean",
@@ -240,6 +289,21 @@
           "type": "boolean",
           "default": false,
           "description": "Use compact memory view"
+        },
+        "coachntt.session.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start session logging when connected"
+        },
+        "coachntt.session.projectName": {
+          "type": "string",
+          "default": "CoachNTT VSCode",
+          "description": "Default project name for session logging"
+        },
+        "coachntt.codeIntelligence.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable code intelligence features"
         }
       }
     },
