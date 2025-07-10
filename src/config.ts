@@ -113,7 +113,22 @@ const ConfigSchema = z.object({
     workingMaxSize: z.number().default(1000),
     sessionMaxSize: z.number().default(5000),
     longTermMaxSize: z.number().default(50000)
-  }).optional()
+  }).optional(),
+  
+  // Vault configuration
+  vaultMode: z.enum(['single', 'dual', 'multi']).default('single'),
+  coreVaultPath: z.string().optional(),
+  projectVaultPath: z.string().optional(),
+  defaultVaultContext: z.enum(['core', 'project']).default('project'),
+  enableCrossVaultSearch: z.boolean().default(false),
+  vaultSearchStrategy: z.enum(['weighted', 'sequential', 'parallel']).default('weighted'),
+  coreVaultWeight: z.number().default(0.3),
+  projectVaultWeight: z.number().default(0.7),
+  
+  // Auto-categorization
+  enableAutoCategorization: z.boolean().default(true),
+  categorizationConfidence: z.number().default(0.8),
+  promotionThreshold: z.number().default(3)
 });
 
 // Detect if running in Docker
@@ -187,7 +202,22 @@ export const config = ConfigSchema.parse({
     workingMaxSize: parseInt(process.env.TIER_WORKING_MAX_SIZE || '1000'),
     sessionMaxSize: parseInt(process.env.TIER_SESSION_MAX_SIZE || '5000'),
     longTermMaxSize: parseInt(process.env.TIER_LONGTERM_MAX_SIZE || '50000')
-  } : undefined
+  } : undefined,
+  
+  // Vault configuration
+  vaultMode: (process.env.VAULT_MODE as 'single' | 'dual' | 'multi') || 'single',
+  coreVaultPath: process.env.CORE_VAULT_PATH,
+  projectVaultPath: process.env.PROJECT_VAULT_PATH || process.env.OBSIDIAN_VAULT_PATH,
+  defaultVaultContext: (process.env.DEFAULT_VAULT_CONTEXT as 'core' | 'project') || 'project',
+  enableCrossVaultSearch: process.env.ENABLE_CROSS_VAULT_SEARCH === 'true',
+  vaultSearchStrategy: (process.env.VAULT_SEARCH_STRATEGY as 'weighted' | 'sequential' | 'parallel') || 'weighted',
+  coreVaultWeight: parseFloat(process.env.CORE_VAULT_WEIGHT || '0.3'),
+  projectVaultWeight: parseFloat(process.env.PROJECT_VAULT_WEIGHT || '0.7'),
+  
+  // Auto-categorization
+  enableAutoCategorization: process.env.ENABLE_AUTO_CATEGORIZATION !== 'false',
+  categorizationConfidence: parseFloat(process.env.CATEGORIZATION_CONFIDENCE || '0.8'),
+  promotionThreshold: parseInt(process.env.PROMOTION_THRESHOLD || '3')
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

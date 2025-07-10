@@ -1,0 +1,103 @@
+services:
+  # PostgreSQL with pgvector for hybrid storage
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: postgres-memory
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=mcp_memory
+      - POSTGRES_USER=mcp_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mcp_memory_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp_user -d mcp_memory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - memory-network
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: chromadb-memory
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/chroma:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:8000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - memory-network
+
+  # MCP Memory Server - For development/testing with dual vault
+  # Note: Claude Desktop will create its own container with proper volume mounts
+  # This is for testing the dual vault configuration
+  
+  # mcp-memory-dual:
+  #   build: .
+  #   container_name: mcp-memory-dual-server
+  #   restart: "no"
+  #   depends_on:
+  #     - chromadb
+  #     - postgres
+  #   environment:
+  #     - DOCKER_CONTAINER=true
+  #     - CHROMA_HOST=chromadb
+  #     - CHROMA_PORT=8000
+  #     - POSTGRES_HOST=postgres
+  #     - POSTGRES_PORT=5432
+  #     - POSTGRES_USER=mcp_user
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mcp_memory_pass}
+  #     - POSTGRES_DB=mcp_memory
+  #     - USE_HYBRID_STORAGE=true
+  #     - VAULT_MODE=dual
+  #     - CORE_VAULT_PATH=/core-vault
+  #     - PROJECT_VAULT_PATH=/project-vault
+  #     - DEFAULT_VAULT_CONTEXT=project
+  #     - ENABLE_CROSS_VAULT_SEARCH=true
+  #     - VAULT_SEARCH_STRATEGY=weighted
+  #     - CORE_VAULT_WEIGHT=0.3
+  #     - PROJECT_VAULT_WEIGHT=0.7
+  #     - ENABLE_AUTO_CATEGORIZATION=true
+  #     - MEMORY_IMPORTANCE_THRESHOLD=${MEMORY_IMPORTANCE_THRESHOLD:-0.7}
+  #     - MEMORY_COLLECTION_NAME=${MEMORY_COLLECTION_NAME:-ai_memories}
+  #     - MAX_MEMORY_RESULTS=${MAX_MEMORY_RESULTS:-10}
+  #     - MCP_SERVER_NAME=${MCP_SERVER_NAME:-ai-memory-server}
+  #     - MCP_SERVER_VERSION=${MCP_SERVER_VERSION:-2.1.0}
+  #   secrets:
+  #     - openai_api_key
+  #     - github_access_token
+  #   volumes:
+  #     # Core vault - User's personal knowledge base
+  #     - ${CORE_VAULT_HOST_PATH:-/path/to/core/vault}:/core-vault:rw
+  #     # Project vault - Project-specific context
+  #     - ${PROJECT_VAULT_HOST_PATH:-./Project_Context/vault}:/project-vault:rw
+  #     # Data persistence
+  #     - ./data/memories:/app/data
+  #   networks:
+  #     - memory-network
+  #   command: ["node", "dist/index.js"]
+
+networks:
+  memory-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+
+secrets:
+  openai_api_key:
+    file: ./secrets/openai_api_key.txt
+  github_access_token:
+    file: ./secrets/github_access_token.txt
