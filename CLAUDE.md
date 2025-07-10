@@ -117,6 +117,43 @@ See [Code Intelligence Guide](./CODE_INTELLIGENCE_GUIDE.md) for code-aware featu
    - Bulk operations complete in <1s (vs 60s+ with ChromaDB alone)
 6. **Pattern Recognition** (In Progress): Learning from development patterns
 7. **Background Services** (Upcoming): Automatic optimization and maintenance
+8. **Multi-Vault Support** (In Development): Dual vault architecture for core knowledge + project contexts
+
+## Multi-Vault Architecture (New Feature)
+
+The platform now supports a powerful dual-vault architecture that enables:
+
+### Core Knowledge Vault
+Your personal "second brain" that persists across all projects:
+- **What it stores**: Programming patterns, best practices, personal preferences, cross-project learnings
+- **Always accessible**: Available in every project you work on
+- **Grows over time**: Accumulates wisdom from every project
+- **Example**: "I always use environment variables for configuration"
+
+### Project Vaults
+Project-specific context that switches with your active work:
+- **What it stores**: Project decisions, code context, local configurations, session logs
+- **Isolated**: Each project has its own vault
+- **Switchable**: Change projects and context switches automatically
+- **Example**: "This project uses PostgreSQL with pgvector for search"
+
+### How They Work Together
+When you're working on a project, you have access to BOTH vaults:
+```
+Query: "How should I implement authentication?"
+- Core Vault: Provides your preferred auth patterns from past projects
+- Project Vault: Shows this project's specific auth implementation
+- Combined: Intelligent response using both contexts
+```
+
+### Benefits
+1. **No repeated learning**: Solve a problem once, have the solution forever
+2. **Project isolation**: Client A's code never leaks to Client B
+3. **Compound knowledge**: Each project makes you better at the next
+4. **Instant context**: Switch projects and immediately have full context
+
+### Configuration
+See `docs/architecture/MULTI_VAULT_DESIGN.md` for implementation details.
 
 ## Architecture
 
