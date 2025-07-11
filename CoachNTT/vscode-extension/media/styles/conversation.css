@@ -1,0 +1,332 @@
+/* Reset and base styles */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-editor-background);
+}
+
+/* Container */
+#conversation-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* Messages container */
+#messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: var(--vscode-editor-background);
+}
+
+#messages {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Message styles */
+.message {
+    display: flex;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.message.user {
+    flex-direction: row-reverse;
+}
+
+.message.assistant {
+    flex-direction: row;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Avatar */
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin: 0 10px;
+}
+
+.message.user .avatar {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.message.assistant .avatar {
+    background-color: var(--vscode-editorWidget-background);
+    color: var(--vscode-editorWidget-foreground);
+}
+
+/* Message body */
+.message-body {
+    max-width: 70%;
+}
+
+.message-content {
+    padding: 12px 16px;
+    border-radius: 12px;
+    word-wrap: break-word;
+}
+
+.message.user .message-content {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.message.assistant .message-content {
+    background-color: var(--vscode-editorWidget-background);
+    color: var(--vscode-editorWidget-foreground);
+    border: 1px solid var(--vscode-editorWidget-border);
+}
+
+/* Message time */
+.message-time {
+    font-size: 0.85em;
+    color: var(--vscode-descriptionForeground);
+    margin-top: 4px;
+    padding: 0 16px;
+}
+
+.message.user .message-time {
+    text-align: right;
+}
+
+/* Code blocks */
+.message-content pre {
+    background-color: var(--vscode-textCodeBlock-background);
+    border: 1px solid var(--vscode-editorWidget-border);
+    border-radius: 4px;
+    padding: 12px;
+    margin: 8px 0;
+    overflow-x: auto;
+    position: relative;
+}
+
+.message-content code {
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+    background-color: var(--vscode-textCodeBlock-background);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.message-content pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+/* Copy button */
+.copy-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+pre:hover .copy-button {
+    opacity: 1;
+}
+
+.copy-button:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Input container */
+#input-container {
+    padding: 20px;
+    background-color: var(--vscode-editorGroupHeader-tabsBackground);
+    border-top: 1px solid var(--vscode-editorGroupHeader-tabsBorder);
+}
+
+#input-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+#message-input {
+    flex: 1;
+    min-height: 40px;
+    max-height: 200px;
+    padding: 10px 14px;
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 6px;
+    resize: none;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+}
+
+#message-input:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder);
+}
+
+#message-input::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+}
+
+/* Buttons */
+button {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+button:hover:not(:disabled) {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#send-button {
+    width: 40px;
+    height: 40px;
+}
+
+/* Input actions */
+#input-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+#input-actions button {
+    background-color: transparent;
+    color: var(--vscode-foreground);
+    opacity: 0.7;
+    padding: 6px 10px;
+    font-size: 14px;
+}
+
+#input-actions button:hover {
+    opacity: 1;
+    background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+/* Audio player */
+#audio-player {
+    padding: 20px;
+    background-color: var(--vscode-editorWidget-background);
+    border-top: 1px solid var(--vscode-editorWidget-border);
+}
+
+#audio-element {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Scrollbar styling */
+#messages-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+#messages-container::-webkit-scrollbar-track {
+    background: var(--vscode-scrollbarSlider-background);
+}
+
+#messages-container::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbarSlider-hoverBackground);
+    border-radius: 5px;
+}
+
+#messages-container::-webkit-scrollbar-thumb:hover {
+    background: var(--vscode-scrollbarSlider-activeBackground);
+}
+
+/* Loading animation */
+.codicon-modifier-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Streaming message indicator */
+.message.streaming .message-content::after {
+    content: '●●●';
+    display: inline-block;
+    animation: pulse 1.5s infinite;
+    margin-left: 4px;
+    opacity: 0.5;
+}
+
+@keyframes pulse {
+    0%, 60%, 100% {
+        opacity: 0.5;
+    }
+    30% {
+        opacity: 1;
+    }
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .message-body {
+        max-width: 85%;
+    }
+    
+    #messages-container {
+        padding: 10px;
+    }
+    
+    #input-container {
+        padding: 10px;
+    }
+}

@@ -35,10 +35,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AudioController = void 0;
 const vscode = __importStar(require("vscode"));
+const AudioPlayer_1 = require("../views/audio/AudioPlayer");
 class AudioController {
-    constructor(mcpClient) {
+    constructor(mcpClient, extensionUri) {
         this.audioQueue = [];
-        this.currentAudio = null; // HTMLAudioElement not available in Node.js context
+        this.audioPlayer = null;
         this.playbackState = {
             isPlaying: false,
             volume: 0.8,
@@ -47,6 +48,7 @@ class AudioController {
         this.onStateChangeEmitter = new vscode.EventEmitter();
         this.onStateChange = this.onStateChangeEmitter.event;
         this.mcpClient = mcpClient;
+        this.extensionUri = extensionUri;
         // Create status bar item for audio controls
         this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
         this.updateStatusBar();
@@ -121,20 +123,35 @@ class AudioController {
             vscode.window.showInformationMessage('Audio queue is empty');
             return;
         }
-        const item = this.audioQueue[0];
-        // For now, just open the audio URL in the browser
-        // TODO: Implement proper audio playback within VSCode
-        vscode.env.openExternal(vscode.Uri.parse(item.audioUrl));
-        // Remove from queue
-        this.audioQueue.shift();
+        // Create or get audio player
+        if (!this.audioPlayer) {
+            this.audioPlayer = AudioPlayer_1.AudioPlayer.createOrShow(this.extensionUri, 'panel');
+        }
+        // Add all queue items to player
+        const items = this.audioQueue.map(item => ({
+            id: item.id,
+            url: item.audioUrl,
+            title: item.text.substring(0, 50) + (item.text.length > 50 ? '...' : ''),
+            metadata: {
+                fullText: item.text,
+                voiceId: item.voiceId,
+                duration: item.duration
+            }
+        }));
+        this.audioPlayer.clearQueue();
+        this.audioPlayer.addMultipleToQueue(items);
+        // Clear our local queue as it's now managed by the player
+        this.audioQueue = [];
+        this.playbackState.isPlaying = true;
         this.updateStatusBar();
+        this.onStateChangeEmitter.fire(this.playbackState);
     }
     /**
      * Pause audio playback
      */
     pause() {
-        if (this.currentAudio && this.playbackState.isPlaying) {
-            // TODO: Implement actual pause functionality
+        if (this.audioPlayer && this.playbackState.isPlaying) {
+            this.audioPlayer.pause();
             this.playbackState.isPlaying = false;
             this.updateStatusBar();
             this.onStateChangeEmitter.fire(this.playbackState);
@@ -144,9 +161,8 @@ class AudioController {
      * Stop audio playback
      */
     stop() {
-        if (this.currentAudio) {
-            // TODO: Implement actual stop functionality
-            this.currentAudio = null;
+        if (this.audioPlayer) {
+            this.audioPlayer.clearQueue();
             this.playbackState.isPlaying = false;
             this.playbackState.currentUrl = undefined;
             this.playbackState.currentText = undefined;
@@ -158,10 +174,37 @@ class AudioController {
      * Skip to next audio in queue
      */
     skip() {
-        this.stop();
-        if (this.audioQueue.length > 0) {
-            this.audioQueue.shift();
+        if (this.audioPlayer) {
+            const state = this.audioPlayer.getState();
+            if (state.queue.length > state.currentIndex + 1) {
+                this.audioPlayer.play();
+            }
+        }
+    }
+    /**
+     * Toggle play/pause
+     */
+    togglePlayPause() {
+        if (this.audioPlayer) {
+            this.audioPlayer.toggle();
+            this.playbackState.isPlaying = !this.playbackState.isPlaying;
+            this.updateStatusBar();
+            this.onStateChangeEmitter.fire(this.playbackState);
+        }
+        else if (this.audioQueue.length > 0) {
             this.play();
+        }
+    }
+    /**
+     * Show audio controls
+     */
+    showControls() {
+        if (!this.audioPlayer) {
+            this.audioPlayer = AudioPlayer_1.AudioPlayer.createOrShow(this.extensionUri, 'panel');
+        }
+        else {
+            // Reveal existing panel
+            AudioPlayer_1.AudioPlayer.createOrShow(this.extensionUri, 'panel');
         }
     }
     /**

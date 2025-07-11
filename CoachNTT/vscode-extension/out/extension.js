@@ -39,12 +39,16 @@ const vscode = __importStar(require("vscode"));
 const connection_manager_1 = require("./services/connection-manager");
 const mcp_client_1 = require("./services/mcp-client");
 const memory_provider_1 = require("./providers/memory-provider");
+const audio_controller_1 = require("./services/audio-controller");
+const ConversationPanel_1 = require("./views/conversation/ConversationPanel");
+const ClaudeClient_1 = require("./services/claude/ClaudeClient");
 // This method is called when your extension is activated
 async function activate(context) {
     console.log('CoachNTT extension is now active!');
     // Initialize services
     const connectionManager = new connection_manager_1.ConnectionManager(context);
     const mcpClient = (0, mcp_client_1.getMCPClient)();
+    const audioController = new audio_controller_1.AudioController(mcpClient, context.extensionUri);
     // Register connect command
     const connectCommand = vscode.commands.registerCommand('coachntt.connect', async () => {
         await connectionManager.connect();
@@ -60,6 +64,15 @@ async function activate(context) {
     // Register configure server command
     const configureServerCommand = vscode.commands.registerCommand('coachntt.configureServer', async () => {
         await connectionManager.configureServer();
+    });
+    // Register open conversation command
+    const openConversationCommand = vscode.commands.registerCommand('coachntt.openConversation', () => {
+        ConversationPanel_1.ConversationPanel.createOrShow(context.extensionUri, context);
+    });
+    // Register clear Claude API key command
+    const clearClaudeApiKeyCommand = vscode.commands.registerCommand('coachntt.clearClaudeApiKey', async () => {
+        const claudeClient = ClaudeClient_1.ClaudeClient.getInstance(context.secrets);
+        await claudeClient.clearApiKey();
     });
     const storeMemoryCommand = vscode.commands.registerCommand('coachntt.storeMemory', async () => {
         if (!mcpClient.isConnected()) {
@@ -169,23 +182,17 @@ async function activate(context) {
         const editor = vscode.window.activeTextEditor;
         if (editor && editor.selection) {
             const selectedText = editor.document.getText(editor.selection);
+            if (!selectedText) {
+                vscode.window.showInformationMessage('CoachNTT: Please select some text first');
+                return;
+            }
             try {
                 await vscode.window.withProgress({
                     location: vscode.ProgressLocation.Notification,
                     title: 'Synthesizing audio...',
                     cancellable: false
                 }, async () => {
-                    const result = await mcpClient.synthesizeAudio(selectedText);
-                    const response = JSON.parse(result.content?.[0]?.text || '{}');
-                    if (response.audio_url) {
-                        vscode.window.showInformationMessage('Audio synthesized successfully!', 'Play')
-                            .then(selection => {
-                            if (selection === 'Play') {
-                                // TODO: Implement audio playback
-                                vscode.env.openExternal(vscode.Uri.parse(response.audio_url));
-                            }
-                        });
-                    }
+                    await audioController.synthesizeAndPlay(selectedText);
                 });
             }
             catch (error) {
@@ -194,6 +201,34 @@ async function activate(context) {
         }
         else {
             vscode.window.showInformationMessage('CoachNTT: Please select some text first');
+        }
+    });
+    // Audio control commands
+    const togglePlaybackCommand = vscode.commands.registerCommand('coachntt.audio.togglePlayback', () => {
+        audioController.togglePlayPause();
+    });
+    const showAudioControlsCommand = vscode.commands.registerCommand('coachntt.audio.showControls', () => {
+        audioController.showControls();
+    });
+    const configureVoiceCommand = vscode.commands.registerCommand('coachntt.audio.configureVoice', async () => {
+        try {
+            const voices = await audioController.getAvailableVoices();
+            const voiceItems = voices.map(voice => ({
+                label: voice.name,
+                description: voice.labels ? Object.values(voice.labels).join(', ') : '',
+                voiceId: voice.voice_id
+            }));
+            const selected = await vscode.window.showQuickPick(voiceItems, {
+                placeHolder: 'Select a voice for audio synthesis'
+            });
+            if (selected) {
+                const config = vscode.workspace.getConfiguration('coachntt');
+                await config.update('audio.defaultVoice', selected.voiceId, true);
+                vscode.window.showInformationMessage(`Voice set to: ${selected.label}`);
+            }
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Failed to configure voice: ${error}`);
         }
     });
     // Add memory stats command
@@ -223,7 +258,7 @@ async function activate(context) {
         }
     });
     // Register all disposables
-    context.subscriptions.push(connectCommand, disconnectCommand, toggleConnectionCommand, configureServerCommand, storeMemoryCommand, searchMemoriesCommand, speakSelectionCommand, showMemoryStatsCommand);
+    context.subscriptions.push(connectCommand, disconnectCommand, toggleConnectionCommand, configureServerCommand, openConversationCommand, clearClaudeApiKeyCommand, storeMemoryCommand, searchMemoriesCommand, speakSelectionCommand, togglePlaybackCommand, showAudioControlsCommand, configureVoiceCommand, showMemoryStatsCommand, audioController);
     // Create memory provider for the tree view
     const memoryProvider = new memory_provider_1.MemoryProvider(mcpClient);
     const memoryTreeProvider = vscode.window.createTreeView('coachntt.memories', {

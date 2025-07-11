@@ -6,8 +6,18 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["AI", "Other"],
-  "keywords": ["ai", "assistant", "memory", "voice", "mcp", "claude"],
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "assistant",
+    "memory",
+    "voice",
+    "mcp",
+    "claude"
+  ],
   "icon": "media/Icon.png",
   "publisher": "coachntt",
   "repository": {
@@ -28,6 +38,15 @@
       {
         "command": "coachntt.configureServer",
         "title": "CoachNTT: Configure Server Settings"
+      },
+      {
+        "command": "coachntt.openConversation",
+        "title": "CoachNTT: Open Conversation",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "coachntt.clearClaudeApiKey",
+        "title": "CoachNTT: Clear Claude API Key"
       },
       {
         "command": "coachntt.showMemoryPanel",
@@ -210,9 +229,9 @@
         },
         "coachntt.audio.defaultSpeed": {
           "type": "number",
-          "default": 1.0,
+          "default": 1,
           "minimum": 0.5,
-          "maximum": 2.0,
+          "maximum": 2,
           "description": "Default playback speed"
         },
         "coachntt.audio.showStatusBar": {
@@ -222,7 +241,11 @@
         },
         "coachntt.audio.queueBehavior": {
           "type": "string",
-          "enum": ["append", "replace", "interrupt"],
+          "enum": [
+            "append",
+            "replace",
+            "interrupt"
+          ],
           "default": "append",
           "description": "Audio queue behavior"
         },
@@ -250,7 +273,11 @@
         },
         "coachntt.memory.searchType": {
           "type": "string",
-          "enum": ["semantic", "exact", "hybrid"],
+          "enum": [
+            "semantic",
+            "exact",
+            "hybrid"
+          ],
           "default": "hybrid",
           "description": "Default memory search type"
         },
@@ -271,7 +298,11 @@
         },
         "coachntt.ui.theme": {
           "type": "string",
-          "enum": ["light", "dark", "auto"],
+          "enum": [
+            "light",
+            "dark",
+            "auto"
+          ],
           "default": "auto",
           "description": "UI theme preference"
         },
@@ -340,17 +371,20 @@
     "publish": "vsce publish"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "20.x",
+    "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
+    "@vscode/test-electron": "^2.3.8",
     "eslint": "^8.56.0",
     "typescript": "^5.3.3",
-    "@vscode/test-electron": "^2.3.8",
     "vsce": "^2.15.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.15.0",
+    "@vscode/webview-ui-toolkit": "^1.4.0",
+    "highlight.js": "^11.11.1",
+    "marked": "^15.0.12",
     "ws": "^8.16.0"
   }
 }

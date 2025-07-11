@@ -9,7 +9,7 @@
 
 A comprehensive conversational AI platform that combines intelligent memory management with premium voice synthesis capabilities, delivered through a rich VSCode extension interface.
 
-[Features](#features) • [Architecture](#architecture) • [Installation](#installation) • [Usage](#usage) • [API](#api) • [UI Design](#ui-design)
+[Features](#features) • [Architecture](#architecture) • [Installation](#installation) • [Usage](#usage) • [API](#api) • [UI Design](#ui-design) • [Implementation Guide](./IMPLEMENTATION_GUIDE.md)
 
 </div>
 
@@ -300,6 +300,16 @@ interface AudioSynthesisResponse {
 ```
 
 ## 🔧 Development
+
+### Current Status
+
+The extension currently has basic memory management features but is missing the core conversational UI. See our [Implementation Guide](./IMPLEMENTATION_GUIDE.md) for the detailed roadmap and current development priorities.
+
+**Next Steps:**
+1. Implement webview conversational UI (Week 1)
+2. Add Claude API integration (Week 2)
+3. Build integrated audio player (Week 3)
+4. Add editor integration features (Week 4)
 
 ### Building from Source
 

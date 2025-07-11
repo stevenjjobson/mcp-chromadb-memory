@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { MCPClient } from './mcp-client';
+import { AudioPlayer } from '../views/audio/AudioPlayer';
 
 export interface AudioPlaybackState {
     isPlaying: boolean;
@@ -12,7 +13,8 @@ export interface AudioPlaybackState {
 export class AudioController {
     private mcpClient: MCPClient;
     private audioQueue: AudioQueueItem[] = [];
-    private currentAudio: any = null; // HTMLAudioElement not available in Node.js context
+    private audioPlayer: AudioPlayer | null = null;
+    private extensionUri: vscode.Uri;
     private playbackState: AudioPlaybackState = {
         isPlaying: false,
         volume: 0.8,
@@ -22,8 +24,9 @@ export class AudioController {
     private onStateChangeEmitter = new vscode.EventEmitter<AudioPlaybackState>();
     public readonly onStateChange = this.onStateChangeEmitter.event;
 
-    constructor(mcpClient: MCPClient) {
+    constructor(mcpClient: MCPClient, extensionUri: vscode.Uri) {
         this.mcpClient = mcpClient;
+        this.extensionUri = extensionUri;
         
         // Create status bar item for audio controls
         this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
@@ -110,23 +113,39 @@ export class AudioController {
             return;
         }
 
-        const item = this.audioQueue[0];
+        // Create or get audio player
+        if (!this.audioPlayer) {
+            this.audioPlayer = AudioPlayer.createOrShow(this.extensionUri, 'panel');
+        }
+
+        // Add all queue items to player
+        const items = this.audioQueue.map(item => ({
+            id: item.id,
+            url: item.audioUrl,
+            title: item.text.substring(0, 50) + (item.text.length > 50 ? '...' : ''),
+            metadata: {
+                fullText: item.text,
+                voiceId: item.voiceId,
+                duration: item.duration
+            }
+        }));
+
+        this.audioPlayer.clearQueue();
+        this.audioPlayer.addMultipleToQueue(items);
         
-        // For now, just open the audio URL in the browser
-        // TODO: Implement proper audio playback within VSCode
-        vscode.env.openExternal(vscode.Uri.parse(item.audioUrl));
-        
-        // Remove from queue
-        this.audioQueue.shift();
+        // Clear our local queue as it's now managed by the player
+        this.audioQueue = [];
+        this.playbackState.isPlaying = true;
         this.updateStatusBar();
+        this.onStateChangeEmitter.fire(this.playbackState);
     }
 
     /**
      * Pause audio playback
      */
     pause(): void {
-        if (this.currentAudio && this.playbackState.isPlaying) {
-            // TODO: Implement actual pause functionality
+        if (this.audioPlayer && this.playbackState.isPlaying) {
+            this.audioPlayer.pause();
             this.playbackState.isPlaying = false;
             this.updateStatusBar();
             this.onStateChangeEmitter.fire(this.playbackState);
@@ -137,9 +156,8 @@ export class AudioController {
      * Stop audio playback
      */
     stop(): void {
-        if (this.currentAudio) {
-            // TODO: Implement actual stop functionality
-            this.currentAudio = null;
+        if (this.audioPlayer) {
+            this.audioPlayer.clearQueue();
             this.playbackState.isPlaying = false;
             this.playbackState.currentUrl = undefined;
             this.playbackState.currentText = undefined;
@@ -152,10 +170,37 @@ export class AudioController {
      * Skip to next audio in queue
      */
     skip(): void {
-        this.stop();
-        if (this.audioQueue.length > 0) {
-            this.audioQueue.shift();
+        if (this.audioPlayer) {
+            const state = this.audioPlayer.getState();
+            if (state.queue.length > state.currentIndex + 1) {
+                this.audioPlayer.play();
+            }
+        }
+    }
+
+    /**
+     * Toggle play/pause
+     */
+    togglePlayPause(): void {
+        if (this.audioPlayer) {
+            this.audioPlayer.toggle();
+            this.playbackState.isPlaying = !this.playbackState.isPlaying;
+            this.updateStatusBar();
+            this.onStateChangeEmitter.fire(this.playbackState);
+        } else if (this.audioQueue.length > 0) {
             this.play();
+        }
+    }
+
+    /**
+     * Show audio controls
+     */
+    showControls(): void {
+        if (!this.audioPlayer) {
+            this.audioPlayer = AudioPlayer.createOrShow(this.extensionUri, 'panel');
+        } else {
+            // Reveal existing panel
+            AudioPlayer.createOrShow(this.extensionUri, 'panel');
         }
     }
 
