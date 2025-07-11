@@ -1,0 +1,44 @@
+{
+  "mcpServers": {
+    "memory": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--name", "claude-mcp-memory",
+        "--network", "mcp-chromadb-memory_memory-network",
+        "-v", "C:/Users/Steve/Obsidian/StevesVault:/core-vault:rw",
+        "-v", "C:/Users/Steve/Dockers/mcp-chromadb-memory/vault:/project-vault:rw",
+        "-e", "OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE",
+        "-e", "DOCKER_CONTAINER=true",
+        "-e", "CHROMA_HOST=chromadb-memory",
+        "-e", "CHROMA_PORT=8000",
+        "-e", "POSTGRES_HOST=postgres-memory",
+        "-e", "POSTGRES_PORT=5432",
+        "-e", "POSTGRES_USER=mcp_user",
+        "-e", "POSTGRES_PASSWORD=mcp_memory_pass",
+        "-e", "POSTGRES_DB=mcp_memory",
+        "-e", "USE_HYBRID_STORAGE=true",
+        "-e", "ENABLE_DUAL_WRITE=true",
+        "-e", "POSTGRES_READ_RATIO=0.5",
+        "-e", "VAULT_MODE=dual",
+        "-e", "CORE_VAULT_PATH=/core-vault",
+        "-e", "PROJECT_VAULT_PATH=/project-vault",
+        "-e", "OBSIDIAN_VAULT_PATH=/project-vault",
+        "-e", "DEFAULT_VAULT_CONTEXT=project",
+        "-e", "ENABLE_CROSS_VAULT_SEARCH=true",
+        "-e", "AUTO_START_SESSION_LOGGING=true",
+        "-e", "SESSION_LOGGING_PROJECT_NAME=MCP ChromaDB Memory",
+        "-e", "SESSION_LOGGING_SAVE_ON_EXIT=true",
+        "-e", "CODE_INDEXING_ENABLED=true",
+        "-e", "CODE_PATTERN_DETECTION=true",
+        "-e", "CODE_STREAMING_ENABLED=true",
+        "-e", "MEMORY_TIER_ENABLED=true",
+        "-e", "ENABLE_MIGRATION_SERVICE=true",
+        "-e", "ENABLE_PATTERN_SERVICE=true",
+        "mcp-chromadb-memory-mcp-memory"
+      ]
+    }
+  }
+}

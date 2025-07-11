@@ -53,3 +53,8 @@ __pycache__/
 
 # Secrets directory
 secrets/
+
+# Claude Desktop config files with potential secrets
+claude_desktop_config_current.json
+*_config_current.json
+*_api_keys.json
