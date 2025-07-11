@@ -1,16 +1,17 @@
-# Development override - includes MCP server for testing
+# CoachNTT Development Environment - includes cognitive server for testing
 # Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 services:
-  mcp-memory:
+  coachntt-cognitive-dev:
     build: .
-    container_name: mcp-memory-server-dev
+    container_name: coachntt-cognitive-server-dev
     restart: "no"
     depends_on:
-      - chromadb
+      - coachntt-chromadb
+      - coachntt-postgres
     environment:
       - DOCKER_CONTAINER=true
-      - CHROMA_HOST=chromadb
+      - CHROMA_HOST=coachntt-chromadb
       - CHROMA_PORT=8000
       - MEMORY_IMPORTANCE_THRESHOLD=${MEMORY_IMPORTANCE_THRESHOLD:-0.7}
       - MEMORY_COLLECTION_NAME=${MEMORY_COLLECTION_NAME:-ai_memories}
@@ -27,5 +28,5 @@ services:
       - ./data/memories:/app/data
       - C:/Users/Steve/Obsidian/StevesVault:/vault:ro
     networks:
-      - memory-network
+      - coachntt-platform-network
     command: ["node", "dist/index.js"]

@@ -1,4 +1,4 @@
--- MCP ChromaDB Memory Server - PostgreSQL Schema
+-- CoachNTT Cognitive Platform - PostgreSQL Schema
 -- Hybrid architecture with pgvector for embeddings
 
 -- Enable required extensions
@@ -469,7 +469,7 @@ WHERE (
     (m.tier = 'session' AND m.created_at < NOW() - INTERVAL '14 days')
 );
 
--- Grant permissions to the application user
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO mcp_user;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO mcp_user;
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO mcp_user;
+-- Grant permissions to the CoachNTT application user
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO coachntt_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO coachntt_user;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO coachntt_user;

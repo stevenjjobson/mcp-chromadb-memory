@@ -18,13 +18,14 @@
       "Bash(git checkout:*)",
       "Bash(./scripts/env-manager.sh:*)",
       "Bash(mv:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   },
+  "enableAllProjectMcpServers": false,
   "enabledMcpjsonServers": [
     "memory",
     "memory-local"
-  ],
-  "enableAllProjectMcpServers": false
+  ]
 }

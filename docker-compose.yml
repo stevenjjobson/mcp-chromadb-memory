@@ -1,28 +1,28 @@
 services:
-  # PostgreSQL with pgvector for hybrid storage
-  postgres:
+  # PostgreSQL with pgvector for CoachNTT Cognitive Platform
+  coachntt-postgres:
     image: pgvector/pgvector:pg16
-    container_name: postgres-memory
+    container_name: coachntt-postgres
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=mcp_memory
-      - POSTGRES_USER=mcp_user
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mcp_memory_pass}
+      - POSTGRES_DB=coachntt_cognitive_db
+      - POSTGRES_USER=coachntt_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-coachntt_pass}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mcp_user -d mcp_memory"]
+      test: ["CMD-SHELL", "pg_isready -U coachntt_user -d coachntt_cognitive_db"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - memory-network
+      - coachntt-platform-network
 
-  chromadb:
+  coachntt-chromadb:
     image: chromadb/chroma:latest
-    container_name: chromadb-memory
+    container_name: coachntt-chromadb
     ports:
       - "8000:8000"
     volumes:
@@ -37,21 +37,22 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - memory-network
+      - coachntt-platform-network
 
-  # MCP Memory Server - For development/testing only
-  # Claude Desktop creates its own container (claude-mcp-memory)
+  # CoachNTT Cognitive Server - For development/testing only
+  # Claude Desktop creates its own container (coachntt-cognitive-server)
   # Uncomment below to test the MCP server independently
   
-  # mcp-memory:
+  # coachntt-cognitive:
   #   build: .
-  #   container_name: mcp-memory-server
+  #   container_name: coachntt-cognitive-server
   #   restart: "no"
   #   depends_on:
-  #     - chromadb
+  #     - coachntt-chromadb
+  #     - coachntt-postgres
   #   environment:
   #     - DOCKER_CONTAINER=true
-  #     - CHROMA_HOST=chromadb
+  #     - CHROMA_HOST=coachntt-chromadb
   #     - CHROMA_PORT=8000
   #     - MEMORY_IMPORTANCE_THRESHOLD=${MEMORY_IMPORTANCE_THRESHOLD:-0.7}
   #     - MEMORY_COLLECTION_NAME=${MEMORY_COLLECTION_NAME:-ai_memories}
@@ -69,7 +70,7 @@ services:
   #   command: ["node", "dist/index.js"]
 
 networks:
-  memory-network:
+  coachntt-platform-network:
     driver: bridge
 
 volumes:

@@ -1,55 +1,55 @@
 services:
-  # PostgreSQL with pgvector for CoachNTT
-  postgres-coachntt:
+  # PostgreSQL with pgvector for CoachNTT Voice Features
+  coachntt-postgres-voice:
     image: pgvector/pgvector:pg16
-    container_name: postgres-coachntt
+    container_name: coachntt-postgres-voice
     ports:
       - "5433:5432"  # Different port to avoid conflicts
     environment:
-      - POSTGRES_DB=coachntt_memory
+      - POSTGRES_DB=coachntt_voice_db
       - POSTGRES_USER=coachntt_user
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-coachntt_pass}
     volumes:
       - postgres_coachntt_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U coachntt_user -d coachntt_memory"]
+      test: ["CMD-SHELL", "pg_isready -U coachntt_user -d coachntt_voice_db"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - coachntt-network
+      - coachntt-voice-network
 
-  chromadb-coachntt:
+  coachntt-chromadb-voice:
     image: chromadb/chroma:latest
-    container_name: chromadb-coachntt
+    container_name: coachntt-chromadb-voice
     ports:
       - "8002:8000"  # Different port to avoid conflicts
     volumes:
-      - ./data/chroma-coachntt:/chroma/chroma
+      - ./data/chroma-coachntt-voice:/chroma/chroma
     environment:
       - IS_PERSISTENT=TRUE
       - PERSIST_DIRECTORY=/chroma/chroma
       - ANONYMIZED_TELEMETRY=FALSE
     networks:
-      - coachntt-network
+      - coachntt-voice-network
 
-  # CoachNTT MCP Server (for testing)
-  coachntt:
+  # CoachNTT Voice Server (specialized for audio features)
+  coachntt-voice:
     build:
       context: .
       dockerfile: Dockerfile.coachntt
-    container_name: coachntt-server
+    container_name: coachntt-voice-server
     depends_on:
-      - chromadb-coachntt
-      - postgres-coachntt
+      - coachntt-chromadb-voice
+      - coachntt-postgres-voice
     environment:
       - DOCKER_CONTAINER=true
-      - CHROMA_HOST=chromadb-coachntt
+      - CHROMA_HOST=coachntt-chromadb-voice
       - CHROMA_PORT=8000
-      - POSTGRES_HOST=postgres-coachntt
+      - POSTGRES_HOST=coachntt-postgres-voice
       - POSTGRES_PORT=5432
-      - POSTGRES_DATABASE=coachntt_memory
+      - POSTGRES_DATABASE=coachntt_voice_db
       - POSTGRES_USER=coachntt_user
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-coachntt_pass}
       - USE_HYBRID_STORAGE=true
@@ -61,11 +61,11 @@ services:
     volumes:
       - ./data/coachntt:/app/data
     networks:
-      - coachntt-network
+      - coachntt-voice-network
     command: ["node", "dist/index-coachntt.js"]
 
 networks:
-  coachntt-network:
+  coachntt-voice-network:
     driver: bridge
 
 volumes:
