@@ -22,7 +22,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 export class VaultIndexService {
-  private indexPath = 'Project_Context/vault/VAULT_INDEX.md';
+  private indexPath = './vault/VAULT_INDEX.md';
   private updateInterval = 300000; // 5 minutes
   private updateTimer?: NodeJS.Timeout;
   
@@ -309,7 +309,7 @@ export class VaultIndexService {
       const tasks: TaskSummary[] = [];
       
       // First, check if there's an Implementation Roadmap
-      const roadmapPath = path.join(this.vaultManager.getVaultPath(), 'Project_Context', 'Implementation Roadmap.md');
+      const roadmapPath = path.join(this.vaultManager.getVaultPath(), 'Planning', 'roadmaps', 'Implementation Roadmap.md');
       
       try {
         const roadmapContent = await fs.readFile(roadmapPath, 'utf-8');
@@ -347,7 +347,7 @@ export class VaultIndexService {
               title: title.substring(0, 100), // Limit length
               status: status as 'pending' | 'in_progress' | 'completed',
               priority,
-              path: `Project_Context/Implementation Roadmap.md#L${index + 1}`
+              path: `Planning/roadmaps/Implementation Roadmap.md#L${index + 1}`
             });
           }
         });
@@ -395,7 +395,7 @@ export class VaultIndexService {
           title: 'Review Implementation Roadmap',
           status: 'pending',
           priority: 'high',
-          path: 'Project_Context/Implementation Roadmap.md'
+          path: 'Planning/roadmaps/Implementation Roadmap.md'
         }
       ];
     } catch (error) {
@@ -644,7 +644,7 @@ export class VaultIndexService {
       const categories = {
         'Core Systems': ['src/', 'lib/'],
         'API References': ['docs/api/', 'API/'],
-        'Implementation Guides': ['docs/guides/', 'Project_Context/'],
+        'Implementation Guides': ['docs/guides/', 'vault/'],
         'Configuration': ['config/', '.env', 'docker-compose'],
         'Architecture': ['Architecture/', 'docs/architecture/']
       };
@@ -718,7 +718,7 @@ export class VaultIndexService {
   }
   
   private async buildNavigation(): Promise<NavigationLinks> {
-    const baseVaultPath = './Project_Context/vault';
+    const baseVaultPath = './vault';
     
     return {
       activeProject: `${baseVaultPath}/10-Active-Projects/MCP-ChromaDB-Memory/`,

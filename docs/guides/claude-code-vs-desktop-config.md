@@ -119,7 +119,7 @@ Can be set up using:
 # Docker setup (requires Docker and docker-compose up)
 claude mcp add memory docker run -i --rm \
   --network mcp-chromadb-memory_memory-network \
-  -v "$(pwd)/Project_Context/vault:/vault:rw" \
+  -v "$(pwd)/vault:/vault:rw" \
   -e OPENAI_API_KEY=$OPENAI_API_KEY \
   -e DOCKER_CONTAINER=true \
   -e CHROMA_HOST=chromadb \

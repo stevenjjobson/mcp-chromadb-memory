@@ -18,7 +18,15 @@ A comprehensive **Cognitive State Management Platform** that transforms how deve
 
 ## 🌟 Overview
 
-The MCP ChromaDB Memory Server has evolved from a simple memory storage tool into a comprehensive **Cognitive State Management Platform**. It intelligently captures, organizes, and retrieves development knowledge while maintaining full project context across sessions, devices, and team members. The platform enables AI assistants like Claude to maintain persistent, intelligent memory with sophisticated hierarchical organization and automatic learning from development patterns.
+The MCP ChromaDB Memory Server has evolved from a simple memory storage tool into a comprehensive **Cognitive State Management Platform** with revolutionary **Dual Vault Architecture**. 
+
+### 🎯 Key Innovation: Dual Vault Architecture
+
+Maintain two separate but connected knowledge bases:
+- **🧠 Core Vault**: Your personal "second brain" that grows with every project
+- **📦 Project Vault**: Clean, isolated context for each specific project
+
+Never lose valuable insights again - learn once, apply everywhere!
 
 ## 🚀 Platform Vision
 
@@ -29,9 +37,16 @@ This project implements a complete cognitive platform that:
 - **Scales Intelligently**: Hierarchical memory system optimized for performance
 - **Integrates Deeply**: Works seamlessly with your existing development workflow
 
-See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20State%20Management.md) for detailed vision.
+See [Platform Approach](./vault/Architecture/Platform%20Approach%20-%20Cognitive%20State%20Management.md) for detailed vision.
 
 ### Platform Capabilities
+
+#### 🌟 Headline Features
+- 🎯 **Dual Vault Architecture** - Separate core knowledge from project contexts while maintaining connections
+- 🚀 **60x Performance Boost** - PostgreSQL hybrid storage eliminates ChromaDB throttling
+- 🧠 **Intelligent Categorization** - Automatically routes memories to the appropriate vault
+- 🔄 **Cross-Vault Search** - Query both vaults with weighted, relevant results
+- 📈 **Memory Promotion** - Elevate project insights to permanent core knowledge
 
 #### Current Features
 - 🤖 **Autonomous Storage** - AI-assessed importance determines what gets stored
@@ -82,11 +97,16 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
 
 ## 📖 Quick References
 
+### 🎯 Get Started with Dual Vaults
+- **[Dual Vault Quick Start](./docs/guides/dual-vault-quickstart.md)** - Set up dual vaults in 5 minutes
+- **[Dual Vault Migration Guide](./docs/guides/DUAL_VAULT_MIGRATION_GUIDE.md)** - Migrate from single vault
+
+### Core Documentation
 - **[Memory Usage Guide](./MEMORY_USAGE_GUIDE.md)** - Learn how to effectively use the memory system
 - **[Hybrid Storage Guide](./HYBRID_STORAGE_GUIDE.md)** - PostgreSQL + ChromaDB hybrid architecture
 - **[Code Intelligence Guide](./CODE_INTELLIGENCE_GUIDE.md)** - Code-aware features and symbol indexing
-- **[Dual Instance Setup](./Project_Context/DUAL_INSTANCE_SETUP.md)** - Set up isolated development environment
-- **[Development Status](./Project_Context/DEVELOPMENT_STATUS.md)** - Current progress and roadmap
+- **[Dual Instance Setup](./vault/Development/DUAL_INSTANCE_SETUP.md)** - Set up isolated development environment
+- **[Development Status](./docs/roadmap/current-status.md)** - Current progress and roadmap
 - **[CoachNTT Implementation](./CoachNTT/README.md)** - Conversational AI with voice synthesis
 
 ## 🚀 Quick Start
@@ -122,6 +142,44 @@ See [Platform Approach](./Project_Context/Platform%20Approach%20-%20Cognitive%20
    ```
 
 > **Note**: The MCP server container will exit immediately when run standalone. This is normal behavior - MCP servers communicate via stdio and need a client to connect. Use the Claude Desktop configuration below to properly connect to the server.
+
+## 🎯 Dual Vault Architecture
+
+### Transform Your Development Workflow
+
+The Dual Vault Architecture revolutionizes how you manage knowledge across projects:
+
+```
+┌─────────────────────┐         ┌─────────────────────┐
+│    Core Vault       │         │   Project Vault     │
+│  (Your Brain 🧠)    │◄────────│  (Current Work 📦)  │
+├─────────────────────┤         ├─────────────────────┤
+│ • Best Practices    │         │ • Project Decisions │
+│ • Code Patterns     │         │ • Local Config      │
+│ • Personal Prefs    │         │ • Client Context    │
+│ • Learned Wisdom    │         │ • Session Logs      │
+└─────────────────────┘         └─────────────────────┘
+         ▲                                 ▲
+         └─────────────┬───────────────────┘
+                       │
+                  Smart Search
+                  Categorization
+                  Memory Promotion
+```
+
+### Quick Setup (2 minutes)
+
+1. **Enable Dual Vaults** in `.env.PRODUCTION`:
+   ```env
+   VAULT_MODE=dual
+   CORE_VAULT_PATH=C:/Users/YourName/Obsidian/YourVault
+   PROJECT_VAULT_PATH=./vault
+   ```
+
+2. **Update Claude Desktop** config to mount both vaults
+3. **Start using** - memories automatically go to the right vault!
+
+See [Dual Vault Quick Start Guide](./docs/guides/dual-vault-quickstart.md) for complete setup.
 
 ### Local Development Setup
 
@@ -165,7 +223,7 @@ The script will:
 - ✅ Display a visual dashboard
 - ✅ Optionally launch Claude Desktop when ready
 
-See [WSL Startup Guide](./Project_Context/Knowledge/Setup/WSL_STARTUP_GUIDE.md) for detailed information.
+See [WSL Startup Guide](./vault/Knowledge/Setup/WSL_STARTUP_GUIDE.md) for detailed information.
 
 ## 🔧 Configuration
 
@@ -213,7 +271,7 @@ MCP_SERVER_VERSION=1.0.0
         "-i",
         "--rm",
         "--network", "mcp-chromadb-memory_memory-network",
-        "-v", "C:/Users/Steve/Dockers/mcp-chromadb-memory/Project_Context:/vault:rw",
+        "-v", "C:/Users/Steve/Dockers/mcp-chromadb-memory/vault:/vault:rw",
         "-e", "DOCKER_CONTAINER=true",
         "-e", "CHROMA_HOST=chromadb",
         "-e", "CHROMA_PORT=8000",
@@ -347,7 +405,7 @@ Manually logs specific events during the session.
 
 **Automatic Session Logging**: Set `AUTO_START_SESSION_LOGGING=true` in your environment to automatically start logging when Claude Code connects. The session will be auto-saved on exit if `SESSION_LOGGING_SAVE_ON_EXIT=true` (default).
 
-See [SESSION_LOGGING.md](./Project_Context/Knowledge/Setup/SESSION_LOGGING.md) for detailed usage.
+See [SESSION_LOGGING.md](./vault/Knowledge/Setup/SESSION_LOGGING.md) for detailed usage.
 
 ### Template Management Tools
 
@@ -404,7 +462,7 @@ Synchronize templates from all configured webhook sources.
 // No parameters required
 ```
 
-See [Template System Design](./Project_Context/Template%20System%20Design.md) for detailed architecture.
+See [Template System Design](./vault/Architecture/Template%20System%20Design.md) for detailed architecture.
 
 ### Vault Structure Management Tools
 
@@ -444,7 +502,7 @@ Apply hooks to existing folders for automated actions.
 }
 ```
 
-See [Hierarchical Vault Structure System](./Project_Context/Hierarchical%20Vault%20Structure%20System.md) for complete documentation.
+See [Hierarchical Vault Structure System](./vault/Architecture/Hierarchical%20Vault%20Structure%20System.md) for complete documentation.
 
 ### Hierarchical Memory System
 
@@ -620,7 +678,7 @@ mcp-chromadb-memory/
 │       ├── streaming-manager.ts # Streaming response handler
 │       ├── migration-service.ts # Tier migration service
 │       └── hybrid-search-service.ts # NEW: Unified search layer
-├── Project_Context/
+├── vault/
 │   ├── vault/               # Project-specific Obsidian vault
 │   │   └── Templates/       # Documentation templates
 │   └── *.md                 # Platform documentation
@@ -689,7 +747,7 @@ graph TD
     C3 --> E4
 ```
 
-See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for transformation details.
+See [Implementation Roadmap](./vault/Planning/roadmaps/Implementation%20Roadmap.md) for transformation details.
 
 ### Memory Scoring Algorithm
 
@@ -743,36 +801,102 @@ Then in the inspector:
 
 ## 🔧 Troubleshooting
 
-### MCP Server Not Appearing in Claude Desktop
+### Quick Diagnostics
+
+Run the configuration validator to check for common issues:
+```bash
+./scripts/validate-config.sh
+```
+
+### MCP Server Not Loading
+
+#### Claude Desktop Issues
 
 1. **Verify configuration file location**:
    - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-   - Ensure JSON syntax is valid (no trailing commas)
+   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - Linux: `~/.config/Claude/claude_desktop_config.json`
 
-2. **Check Docker setup**:
+2. **Common configuration errors**:
+   - JSON syntax errors (use `python -m json.tool < config.json` to validate)
+   - Wrong container names (should be `chromadb-memory` and `postgres-memory`)
+   - Hardcoded API keys (security risk but required for Claude Desktop)
+   - Windows path issues (use forward slashes: `C:/Users/...`)
+
+3. **Quick setup script**:
    ```bash
-   docker images | grep mcp-chromadb-memory
-   docker network ls | grep memory-network
+   ./scripts/setup-claude-desktop.sh
    ```
 
-3. **Ensure ChromaDB is running**:
+#### Claude Code CLI Issues
+
+1. **Environment variables not set**:
    ```bash
-   docker-compose ps
+   export OPENAI_API_KEY="your-api-key-here"
+   # Add to ~/.bashrc for persistence
    ```
 
-4. **Test manually**:
+2. **Configuration issues**:
+   - `.mcp.json` must be in project root
+   - Check for empty environment variables in config
+   - Ensure `.env.PRODUCTION` has correct settings
+
+3. **Test the server directly**:
    ```bash
-   docker run -it --rm \
-     --network mcp-chromadb-memory_memory-network \
-     -e OPENAI_API_KEY=your-key \
-     mcp-chromadb-memory-mcp-memory
+   OPENAI_API_KEY="your-key" node dist/index.js
    ```
 
-### Common Issues
+### Database Connection Errors
 
-- **"Container exits immediately"**: This is normal for MCP servers - they run on-demand
-- **"Cannot connect to ChromaDB"**: Ensure ChromaDB container is healthy
-- **"Missing OpenAI API key"**: Check your .env file or Docker environment variables
+1. **Check service names match**:
+   ```yaml
+   # docker-compose.yml should have:
+   postgres:
+     container_name: postgres-memory
+   chromadb:
+     container_name: chromadb-memory
+   ```
+
+2. **Verify credentials match**:
+   - PostgreSQL: `mcp_user` / `mcp_memory_pass` / `mcp_memory`
+   - These must be consistent across all config files
+
+3. **Check if services are healthy**:
+   ```bash
+   docker ps
+   # Look for (healthy) or (unhealthy) status
+   ```
+
+### Path and Environment Issues
+
+1. **Vault path not found**:
+   - Check `.env.PRODUCTION` has `OBSIDIAN_VAULT_PATH=./vault`
+   - Ensure vault directory exists
+   - For dual vault: ensure both paths exist and are accessible
+
+2. **Environment file loading**:
+   - System loads `.env.PRODUCTION` by default
+   - Settings in `.env` are ignored unless ENVIRONMENT_NAME is set
+   - Missing settings don't fall back to other files
+
+### Common Issues and Solutions
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| "Container exits immediately" | Normal MCP behavior | MCP servers run on-demand |
+| "Cannot connect to ChromaDB" | Container unhealthy | `docker-compose restart chromadb` |
+| "Missing OpenAI API key" | Not in environment | Set `OPENAI_API_KEY` env var |
+| "Vault not found at ./vault" | Path misconfiguration | Ensure vault directory exists and is accessible |
+| "Bad escaped character in JSON" | Windows path issue | Use forward slashes in paths |
+| "postgres role does not exist" | Wrong credentials | Check docker-compose.yml matches config |
+
+### Configuration Reference
+
+See the comprehensive [MCP Configuration Guide](docs/guides/mcp-configuration-guide.md) for:
+- Detailed Claude Desktop vs Claude Code CLI differences
+- Platform-specific setup instructions
+- Environment variable reference
+- Security best practices
 
 ## 🤝 Contributing
 
@@ -823,7 +947,7 @@ The project uses a dual documentation structure:
 - Architecture notes
 - Roadmap and status
 
-**Knowledge Base** (`Project_Context/`):
+**Knowledge Base** (`vault/`):
 - Obsidian vault for AI context
 - Session logs and development history
 - Architecture decisions
@@ -831,10 +955,10 @@ The project uses a dual documentation structure:
 - Templates and planning documents
 
 Key locations:
-- **Setup Guides**: `Project_Context/Knowledge/Setup/`
-- **Architecture**: `Project_Context/Architecture/`
-- **Session Logs**: `Project_Context/Sessions/`
-- **Templates**: `Project_Context/Templates/`
+- **Setup Guides**: `vault/Knowledge/Setup/`
+- **Architecture**: `vault/Architecture/`
+- **Session Logs**: `vault/Sessions/`
+- **Templates**: `vault/Templates/`
 
 ---
 

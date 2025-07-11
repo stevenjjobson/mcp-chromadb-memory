@@ -8,7 +8,7 @@
         "--rm",
         "--name", "claude-mcp-memory",
         "--network", "mcp-chromadb-memory_memory-network",
-        "-v", "C:/Users/Steve/Dockers/mcp-chromadb-memory/Project_Context/vault:/vault:rw",
+        "-v", "C:/Users/Steve/Dockers/mcp-chromadb-memory/vault:/vault:rw",
         "-e", "OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE",
         "-e", "DOCKER_CONTAINER=true",
         "-e", "CHROMA_HOST=chromadb-memory",

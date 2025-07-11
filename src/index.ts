@@ -46,6 +46,14 @@ import {
 import { CodeIntelligenceTools } from './tools/code-intelligence-tools.js';
 import { sanitizeMetadata } from './utils/metadata-validator.js';
 import { ToolRegistry } from './tools/tool-registry.js';
+import { 
+  dualVaultTools,
+  handlePromoteToCore,
+  handleGetVaultStats,
+  handleSwitchProject,
+  handleSearchCrossVault,
+  handleCategorizeMemory
+} from './tools/dual-vault-tools.js';
 
 // Handle Windows-specific process signals
 if (process.platform === "win32") {
@@ -79,6 +87,7 @@ let memoryPatternService: MemoryPatternService | null = null;
 let obsidianManager: ObsidianManager | null = null;
 let sessionLogger: SessionLogger | null = null;
 let vaultManager: VaultManager | null = null;
+let dualVaultManager: DualVaultManager | null = null;
 let stateManager: StateManager | null = null;
 let templateManager: TemplateManager | null = null;
 let structureManager: VaultStructureManager | null = null;
@@ -97,801 +106,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: toolRegistry.getTools()
   };
-});
-
-// [Old handler code removed - replaced with ToolRegistry]
-      {
-        name: 'health_check',
-        description: 'Check if the memory server is running correctly',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-        },
-      },
-      {
-        name: 'store_memory',
-        description: 'Store information based on AI-assessed importance',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            content: {
-              type: 'string',
-              description: 'The information to store'
-            },
-            context: {
-              type: 'string',
-              description: 'Context category (e.g., general, user_preference, task_critical, obsidian_note, code_symbol, code_pattern, code_decision, code_snippet, code_error)',
-              default: 'general'
-            },
-            metadata: {
-              type: 'object',
-              description: 'Additional metadata to store with the memory',
-              default: {}
-            }
-          },
-          required: ['content']
-        },
-      },
-      {
-        name: 'recall_memories',
-        description: 'Retrieve relevant memories with context-aware filtering',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description: 'Search query to find relevant memories'
-            },
-            context: {
-              type: 'string',
-              description: 'Optional context filter'
-            },
-            limit: {
-              type: 'number',
-              description: 'Maximum number of memories to return',
-              default: 5
-            }
-          },
-          required: ['query']
-        },
-      },
-      {
-        name: 'read_obsidian_note',
-        description: 'Read a specific note from the Obsidian vault',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            notePath: {
-              type: 'string',
-              description: 'Path to the note relative to vault root (e.g., "Daily Notes/2024-01-01.md")'
-            }
-          },
-          required: ['notePath']
-        },
-      },
-      {
-        name: 'list_obsidian_notes',
-        description: 'List all notes in the vault or a specific folder',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            folderPath: {
-              type: 'string',
-              description: 'Optional folder path to list notes from',
-              default: ''
-            }
-          }
-        },
-      },
-      {
-        name: 'search_obsidian_vault',
-        description: 'Search for notes in the Obsidian vault using semantic search',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description: 'Search query'
-            },
-            limit: {
-              type: 'number',
-              description: 'Maximum number of results',
-              default: 10
-            }
-          },
-          required: ['query']
-        },
-      },
-      {
-        name: 'write_obsidian_note',
-        description: 'Create or update a note in the Obsidian vault',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            notePath: {
-              type: 'string',
-              description: 'Path where to save the note'
-            },
-            content: {
-              type: 'string',
-              description: 'Content of the note'
-            },
-            frontmatter: {
-              type: 'object',
-              description: 'Optional frontmatter metadata',
-              default: {}
-            }
-          },
-          required: ['notePath', 'content']
-        },
-      },
-      {
-        name: 'get_obsidian_backlinks',
-        description: 'Get all notes that link to a specific note',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            notePath: {
-              type: 'string',
-              description: 'Path to the note to find backlinks for'
-            }
-          },
-          required: ['notePath']
-        },
-      },
-      {
-        name: 'index_obsidian_vault',
-        description: 'Index Obsidian vault notes into ChromaDB for fast semantic search',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            folders: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Specific folders to index (optional)'
-            },
-            tags: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Only index notes with these tags (optional)'
-            },
-            forceReindex: {
-              type: 'boolean',
-              description: 'Force reindexing of all notes',
-              default: false
-            },
-            dryRun: {
-              type: 'boolean',
-              description: 'Preview what would be indexed without actually indexing',
-              default: false
-            }
-          }
-        },
-      },
-      {
-        name: 'get_obsidian_index_status',
-        description: 'Get the current status of the Obsidian vault index',
-        inputSchema: {
-          type: 'object',
-          properties: {}
-        },
-      },
-      {
-        name: 'clear_obsidian_index',
-        description: 'Clear all indexed Obsidian notes from ChromaDB',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            confirm: {
-              type: 'boolean',
-              description: 'Confirm clearing the index',
-              default: false
-            }
-          },
-          required: ['confirm']
-        },
-      },
-      {
-        name: 'start_session_logging',
-        description: 'Start logging this Claude Code session to Obsidian',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            project: {
-              type: 'string',
-              description: 'Project name for this session',
-              default: 'General'
-            }
-          }
-        },
-      },
-      {
-        name: 'save_session_log',
-        description: 'Save the current session log to Obsidian',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            summary: {
-              type: 'string',
-              description: 'Optional manual summary of the session'
-            }
-          }
-        },
-      },
-      {
-        name: 'log_session_event',
-        description: 'Log a specific event or decision to the session',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            type: {
-              type: 'string',
-              description: 'Type of event (user, assistant, tool, decision, achievement)',
-              enum: ['user', 'assistant', 'tool', 'decision', 'achievement']
-            },
-            content: {
-              type: 'string',
-              description: 'Content to log'
-            },
-            metadata: {
-              type: 'object',
-              description: 'Additional metadata',
-              default: {}
-            }
-          },
-          required: ['type', 'content']
-        },
-      },
-      {
-        name: 'import_template',
-        description: 'Import a documentation template from external source',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            source: {
-              type: 'string',
-              description: 'URL of the template to import'
-            },
-            category: {
-              type: 'string',
-              description: 'Template category',
-              enum: ['session', 'decision', 'pattern', 'solution', 'snippet', 'custom']
-            },
-            variables: {
-              type: 'object',
-              description: 'Variables to apply to the template (optional)'
-            },
-            saveAs: {
-              type: 'string',
-              description: 'Filename to save the generated document (optional)'
-            }
-          },
-          required: ['source']
-        },
-      },
-      {
-        name: 'list_templates',
-        description: 'List all available templates',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            category: {
-              type: 'string',
-              description: 'Filter by category (optional)'
-            },
-            source: {
-              type: 'string',
-              description: 'Filter by source (optional)'
-            }
-          }
-        },
-      },
-      {
-        name: 'apply_template',
-        description: 'Apply a template with given variables',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            templateId: {
-              type: 'string',
-              description: 'ID of the template to apply'
-            },
-            variables: {
-              type: 'object',
-              description: 'Variables to apply to the template'
-            },
-            outputPath: {
-              type: 'string',
-              description: 'Path where to save the generated document'
-            }
-          },
-          required: ['templateId', 'variables', 'outputPath']
-        },
-      },
-      {
-        name: 'configure_template_webhook',
-        description: 'Configure a webhook source for templates',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            name: {
-              type: 'string',
-              description: 'Name for this webhook source'
-            },
-            url: {
-              type: 'string',
-              description: 'Webhook URL'
-            },
-            authType: {
-              type: 'string',
-              description: 'Authentication type',
-              enum: ['none', 'bearer', 'api-key', 'oauth']
-            },
-            authCredentials: {
-              type: 'string',
-              description: 'Authentication credentials (optional)'
-            },
-            syncInterval: {
-              type: 'number',
-              description: 'Sync interval in minutes (optional)'
-            }
-          },
-          required: ['name', 'url']
-        },
-      },
-      {
-        name: 'sync_templates',
-        description: 'Synchronize templates from all configured sources',
-        inputSchema: {
-          type: 'object',
-          properties: {}
-        },
-      },
-      {
-        name: 'import_vault_structure',
-        description: 'Import a complete vault structure with templates and hooks',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            source: {
-              type: 'string',
-              description: 'URL or path to structure definition'
-            },
-            applyImmediately: {
-              type: 'boolean',
-              description: 'Apply structure immediately after import',
-              default: false
-            },
-            targetPath: {
-              type: 'string',
-              description: 'Target path for structure (defaults to active vault)'
-            }
-          },
-          required: ['source']
-        },
-      },
-      {
-        name: 'generate_vault_structure',
-        description: 'Generate folder hierarchy from a structure template',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            structureId: {
-              type: 'string',
-              description: 'ID or name of the structure to generate'
-            },
-            targetPath: {
-              type: 'string',
-              description: 'Target path for generation'
-            },
-            options: {
-              type: 'object',
-              properties: {
-                skipExisting: {
-                  type: 'boolean',
-                  description: 'Skip folders that already exist',
-                  default: true
-                },
-                dryRun: {
-                  type: 'boolean',
-                  description: 'Preview without making changes',
-                  default: false
-                },
-                applyTemplates: {
-                  type: 'boolean',
-                  description: 'Apply templates to folders',
-                  default: true
-                }
-              }
-            }
-          },
-          required: ['targetPath']
-        },
-      },
-      {
-        name: 'apply_folder_hooks',
-        description: 'Apply hooks to existing folder structure',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            folderPath: {
-              type: 'string',
-              description: 'Folder path to apply hooks to'
-            },
-            hookIds: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Specific hook IDs to apply (optional)'
-            }
-          },
-          required: ['folderPath']
-        },
-      },
-      {
-        name: 'get_vault_index',
-        description: 'Retrieve the current vault index with system health and statistics',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            format: {
-              type: 'string',
-              description: 'Output format (json or markdown)',
-              enum: ['json', 'markdown'],
-              default: 'json'
-            }
-          }
-        },
-      },
-      {
-        name: 'check_memory_health',
-        description: 'Run memory system health diagnostics',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            includeRecommendations: {
-              type: 'boolean',
-              description: 'Include optimization recommendations',
-              default: true
-            }
-          }
-        },
-      },
-      {
-        name: 'regenerate_index',
-        description: 'Force regeneration of the vault index',
-        inputSchema: {
-          type: 'object',
-          properties: {}
-        },
-      },
-      {
-        name: 'get_startup_summary',
-        description: 'Get the startup summary information',
-        inputSchema: {
-          type: 'object',
-          properties: {}
-        },
-      },
-      // Enhanced memory tools
-      {
-        name: 'search_exact',
-        description: 'Search for memories using exact string matching',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description: 'Exact search query'
-            },
-            field: {
-              type: 'string',
-              description: 'Optional metadata field to search in'
-            },
-            limit: {
-              type: 'number',
-              description: 'Maximum number of results',
-              default: 10
-            }
-          },
-          required: ['query']
-        },
-      },
-      {
-        name: 'search_hybrid',
-        description: 'Search using both exact and semantic matching with configurable weights',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description: 'Search query'
-            },
-            context: {
-              type: 'string',
-              description: 'Optional context filter'
-            },
-            exactWeight: {
-              type: 'number',
-              description: 'Weight for exact match (0-1)',
-              default: 0.4
-            },
-            limit: {
-              type: 'number',
-              description: 'Maximum number of results',
-              default: 10
-            }
-          },
-          required: ['query']
-        },
-      },
-      {
-        name: 'get_compressed_context',
-        description: 'Get compressed context from relevant memories optimized for AI token limits',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            query: {
-              type: 'string',
-              description: 'Query to find relevant memories'
-            },
-            maxTokens: {
-              type: 'number',
-              description: 'Maximum tokens for compressed context',
-              default: 500
-            },
-            preserveStructure: {
-              type: 'boolean',
-              description: 'Preserve document structure',
-              default: true
-            },
-            smartFiltering: {
-              type: 'boolean',
-              description: 'Use smart filtering',
-              default: true
-            }
-          },
-          required: ['query']
-        },
-      },
-      {
-        name: 'get_optimized_memory',
-        description: 'Get a specific memory optimized for AI consumption with token limit',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            memoryId: {
-              type: 'string',
-              description: 'Memory ID to optimize'
-            },
-            maxTokens: {
-              type: 'number',
-              description: 'Maximum tokens for optimized output',
-              default: 300
-            }
-          },
-          required: ['memoryId']
-        },
-      },
-      {
-        name: 'analyze_access_patterns',
-        description: 'Analyze memory access patterns and get tier recommendations',
-        inputSchema: {
-          type: 'object',
-          properties: {}
-        },
-      },
-      // Tier management tools
-      {
-        name: 'get_tier_stats',
-        description: 'Get statistics for each memory tier',
-        inputSchema: {
-          type: 'object',
-          properties: {}
-        },
-      },
-      {
-        name: 'run_migration',
-        description: 'Manually run memory tier migration',
-        inputSchema: {
-          type: 'object',
-          properties: {}
-        },
-      },
-      {
-        name: 'get_migration_status',
-        description: 'Get the status of the migration service',
-        inputSchema: {
-          type: 'object',
-          properties: {}
-        },
-      },
-      // Vault management tools
-      {
-        name: 'register_vault',
-        description: 'Register a new vault for multi-project support',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            name: {
-              type: 'string',
-              description: 'Vault name'
-            },
-            path: {
-              type: 'string',
-              description: 'Vault path'
-            },
-            type: {
-              type: 'string',
-              enum: ['project', 'personal', 'team'],
-              description: 'Vault type',
-              default: 'personal'
-            }
-          },
-          required: ['name', 'path']
-        },
-      },
-      {
-        name: 'switch_vault',
-        description: 'Switch to a different vault',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            vaultId: {
-              type: 'string',
-              description: 'ID of the vault to switch to'
-            }
-          },
-          required: ['vaultId']
-        },
-      },
-      {
-        name: 'list_vaults',
-        description: 'List all registered vaults',
-        inputSchema: {
-          type: 'object',
-          properties: {}
-        },
-      },
-      {
-        name: 'backup_vault',
-        description: 'Create a backup of the current or specified vault',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            vaultId: {
-              type: 'string',
-              description: 'Optional vault ID to backup'
-            }
-          }
-        },
-      },
-      {
-        name: 'restore_vault',
-        description: 'Restore a vault from backup',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            backupPath: {
-              type: 'string',
-              description: 'Path to the backup file'
-            },
-            targetVaultId: {
-              type: 'string',
-              description: 'Optional target vault ID'
-            }
-          },
-          required: ['backupPath']
-        },
-      },
-      // State management tools
-      {
-        name: 'capture_state',
-        description: 'Capture current working context and memory state',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            name: {
-              type: 'string',
-              description: 'State name'
-            },
-            description: {
-              type: 'string',
-              description: 'Optional description'
-            },
-            tags: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Optional tags'
-            },
-            importance: {
-              type: 'number',
-              description: 'Importance score (0-1)',
-              default: 0.7
-            },
-            expiresInDays: {
-              type: 'number',
-              description: 'Days until expiration'
-            }
-          },
-          required: ['name']
-        },
-      },
-      {
-        name: 'restore_state',
-        description: 'Restore a previously captured state',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            stateId: {
-              type: 'string',
-              description: 'ID of the state to restore'
-            }
-          },
-          required: ['stateId']
-        },
-      },
-      {
-        name: 'list_states',
-        description: 'List available captured states',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            vaultId: {
-              type: 'string',
-              description: 'Optional vault ID filter'
-            }
-          }
-        },
-      },
-      {
-        name: 'diff_states',
-        description: 'Compare two captured states',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            stateId1: {
-              type: 'string',
-              description: 'First state ID'
-            },
-            stateId2: {
-              type: 'string',
-              description: 'Second state ID'
-            }
-          },
-          required: ['stateId1', 'stateId2']
-        },
-      },
-    ];
-    
-    // Dynamically add Code Intelligence Tools if initialized
-    if (codeIntelligenceTools) {
-      const ciTools = codeIntelligenceTools.getTools().map(tool => ({
-        name: tool.name,
-        description: tool.description,
-        inputSchema: {
-          type: 'object',
-          properties: Object.fromEntries(
-            Object.entries(tool.inputSchema.shape).map(([key, schema]: [string, any]) => [
-              key,
-              {
-                type: schema._def.typeName === 'ZodString' ? 'string' : 
-                      schema._def.typeName === 'ZodNumber' ? 'number' : 
-                      schema._def.typeName === 'ZodBoolean' ? 'boolean' : 
-                      schema._def.typeName === 'ZodArray' ? 'array' : 'object',
-                description: schema.description,
-                ...(schema._def.defaultValue !== undefined ? { default: schema._def.defaultValue() } : {})
-              }
-            ])
-          ),
-          required: Object.entries(tool.inputSchema.shape)
-            .filter(([_, schema]: [string, any]) => !schema.isOptional())
-            .map(([key]) => key)
-        }
-      }));
-      tools.push(...ciTools);
-    }
-    
-    return { tools };
 });
 
 // Update CallToolRequestSchema handler to handle new tools
@@ -922,58 +136,263 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         // Sanitize metadata before storing
         const metadata = args?.metadata ? sanitizeMetadata(args.metadata as Record<string, any>) : undefined;
         
-        const storeResult = await memoryManager.storeMemory(
-          args?.content as string,
-          args?.context as string,
-          metadata
-        );
-        
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(storeResult, null, 2)
-            }
-          ]
-        };
+        // Handle vault routing if dual vault is enabled
+        if (dualVaultManager && args?.vault) {
+          const vaultParam = args.vault as string;
+          
+          // If auto mode, categorize the content
+          if (vaultParam === 'auto') {
+            const categorization = await dualVaultManager.categorizeContent(
+              args.content as string,
+              metadata
+            );
+            
+            // Add vault info to metadata
+            const enhancedMetadata = {
+              ...metadata,
+              vault: categorization.vault,
+              categorizationConfidence: categorization.confidence
+            };
+            
+            // Store the memory with vault info
+            const storeResult = await memoryManager.storeMemory(
+              args.content as string,
+              args.context as string,
+              enhancedMetadata
+            );
+            
+            // Also save to appropriate vault as a note
+            const notePath = `memories/${storeResult.id}.md`;
+            const noteContent = `# Memory: ${storeResult.id}\n\n${args.content}\n\n---\n\nContext: ${args.context || 'general'}\nVault: ${categorization.vault}\nConfidence: ${Math.round(categorization.confidence * 100)}%\nReasoning: ${categorization.reasoning}`;
+            
+            await dualVaultManager.saveDocument(notePath, noteContent, {
+              vault: categorization.vault
+            });
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    ...storeResult,
+                    vault: categorization.vault,
+                    categorization: {
+                      confidence: `${Math.round(categorization.confidence * 100)}%`,
+                      reasoning: categorization.reasoning
+                    }
+                  }, null, 2)
+                }
+              ]
+            };
+          } else {
+            // Direct vault specified
+            const targetVault = vaultParam as 'core' | 'project';
+            const enhancedMetadata = {
+              ...metadata,
+              vault: targetVault
+            };
+            
+            const storeResult = await memoryManager.storeMemory(
+              args.content as string,
+              args.context as string,
+              enhancedMetadata
+            );
+            
+            // Save to specified vault
+            const notePath = `memories/${storeResult.id}.md`;
+            const noteContent = `# Memory: ${storeResult.id}\n\n${args.content}\n\n---\n\nContext: ${args.context || 'general'}\nVault: ${targetVault}`;
+            
+            await dualVaultManager.saveDocument(notePath, noteContent, {
+              vault: targetVault
+            });
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    ...storeResult,
+                    vault: targetVault
+                  }, null, 2)
+                }
+              ]
+            };
+          }
+        } else {
+          // Fallback to standard memory storage
+          const storeResult = await memoryManager.storeMemory(
+            args?.content as string,
+            args?.context as string,
+            metadata
+          );
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(storeResult, null, 2)
+              }
+            ]
+          };
+        }
       }
         
       case 'recall_memories': {
-        const memories = await memoryManager.searchSemantic(
-          args?.query as string,
-          args?.context as string,
-          args?.limit as number
-        );
-        
-        // Track access patterns
-        if (memoryPatternService) {
-          for (const result of memories) {
-            await memoryPatternService.trackAccess(result.memory.id);
-          }
-        }
-        
-        const formattedMemories = memories.map(m => ({
-          content: m.memory.content,
-          context: m.memory.context,
-          importance: m.memory.importance.toFixed(2),
-          timestamp: m.memory.timestamp,
-          scores: {
-            total: m.totalScore.toFixed(3),
-            semantic: m.semanticScore.toFixed(3),
-            recency: m.recencyScore.toFixed(3),
-            importance: m.importanceScore.toFixed(3),
-            frequency: m.frequencyScore.toFixed(3)
-          }
-        }));
-        
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(formattedMemories, null, 2)
+        // Handle vault-aware search if dual vault is enabled
+        if (dualVaultManager && args?.vault && args.vault !== 'both') {
+          // Search specific vault or cross-vault
+          const vaultParam = args.vault as string;
+          
+          if (vaultParam === 'both') {
+            // Cross-vault search
+            const vaultResults = await dualVaultManager.searchDocuments(
+              args.query as string,
+              {
+                vaults: ['core', 'project'],
+                strategy: 'weighted',
+                limit: args.limit as number || 5
+              }
+            );
+            
+            // Also search in memory manager
+            const memories = await memoryManager.searchSemantic(
+              args?.query as string,
+              args?.context as string,
+              args?.limit as number
+            );
+            
+            // Track access patterns
+            if (memoryPatternService) {
+              for (const result of memories) {
+                await memoryPatternService.trackAccess(result.memory.id);
+              }
             }
-          ]
-        };
+            
+            // Combine results
+            const formattedMemories = memories.map(m => ({
+              source: 'memory',
+              vault: m.memory.metadata?.vault || 'unknown',
+              content: m.memory.content,
+              context: m.memory.context,
+              importance: m.memory.importance.toFixed(2),
+              timestamp: m.memory.timestamp,
+              scores: {
+                total: m.totalScore.toFixed(3),
+                semantic: m.semanticScore.toFixed(3),
+                recency: m.recencyScore.toFixed(3),
+                importance: m.importanceScore.toFixed(3),
+                frequency: m.frequencyScore.toFixed(3)
+              }
+            }));
+            
+            const vaultMemories = vaultResults.map(r => ({
+              source: 'vault',
+              vault: r.vault,
+              path: r.path,
+              content: r.content.substring(0, 500) + '...',
+              score: r.score.toFixed(3)
+            }));
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    memories: formattedMemories,
+                    vaultResults: vaultMemories,
+                    totalResults: formattedMemories.length + vaultMemories.length
+                  }, null, 2)
+                }
+              ]
+            };
+          } else {
+            // Search specific vault only
+            const targetVault = vaultParam as 'core' | 'project';
+            
+            // Filter memories by vault metadata
+            const allMemories = await memoryManager.searchSemantic(
+              args?.query as string,
+              args?.context as string,
+              (args?.limit as number || 5) * 2 // Get more to filter
+            );
+            
+            const filteredMemories = allMemories.filter(m => 
+              m.memory.metadata?.vault === targetVault
+            ).slice(0, args?.limit as number || 5);
+            
+            // Track access patterns
+            if (memoryPatternService) {
+              for (const result of filteredMemories) {
+                await memoryPatternService.trackAccess(result.memory.id);
+              }
+            }
+            
+            const formattedMemories = filteredMemories.map(m => ({
+              vault: targetVault,
+              content: m.memory.content,
+              context: m.memory.context,
+              importance: m.memory.importance.toFixed(2),
+              timestamp: m.memory.timestamp,
+              scores: {
+                total: m.totalScore.toFixed(3),
+                semantic: m.semanticScore.toFixed(3),
+                recency: m.recencyScore.toFixed(3),
+                importance: m.importanceScore.toFixed(3),
+                frequency: m.frequencyScore.toFixed(3)
+              }
+            }));
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    vault: targetVault,
+                    memories: formattedMemories
+                  }, null, 2)
+                }
+              ]
+            };
+          }
+        } else {
+          // Standard memory search (backward compatible)
+          const memories = await memoryManager.searchSemantic(
+            args?.query as string,
+            args?.context as string,
+            args?.limit as number
+          );
+          
+          // Track access patterns
+          if (memoryPatternService) {
+            for (const result of memories) {
+              await memoryPatternService.trackAccess(result.memory.id);
+            }
+          }
+          
+          const formattedMemories = memories.map(m => ({
+            content: m.memory.content,
+            context: m.memory.context,
+            importance: m.memory.importance.toFixed(2),
+            timestamp: m.memory.timestamp,
+            vault: m.memory.metadata?.vault || 'unknown',
+            scores: {
+              total: m.totalScore.toFixed(3),
+              semantic: m.semanticScore.toFixed(3),
+              recency: m.recencyScore.toFixed(3),
+              importance: m.importanceScore.toFixed(3),
+              frequency: m.frequencyScore.toFixed(3)
+            }
+          }));
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(formattedMemories, null, 2)
+              }
+            ]
+          };
+        }
       }
 
       case 'read_obsidian_note': {
@@ -1579,7 +998,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 type: 'text',
                 text: JSON.stringify({
                   success: true,
-                  indexPath: 'Project_Context/vault/VAULT_INDEX.md',
+                  indexPath: './vault/VAULT_INDEX.md',
                   message: 'Vault index available at the specified path',
                   summary: {
                     health: index.health.overall,
@@ -1658,7 +1077,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: JSON.stringify({
                 success: true,
                 message: 'Vault index regenerated successfully',
-                indexPath: 'Project_Context/vault/VAULT_INDEX.md',
+                indexPath: './vault/VAULT_INDEX.md',
                 timestamp: new Date().toISOString()
               }, null, 2)
             }
@@ -2080,6 +1499,82 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error(`Code intelligence tool error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
+      
+      // Dual Vault Tools
+      case 'promote_to_core': {
+        if (!dualVaultManager) {
+          throw new Error('Dual vault manager not initialized');
+        }
+        const result = await handlePromoteToCore(args as any, dualVaultManager, memoryManager);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'get_vault_stats': {
+        if (!dualVaultManager) {
+          throw new Error('Dual vault manager not initialized');
+        }
+        const result = await handleGetVaultStats(args as any, dualVaultManager);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'switch_project': {
+        if (!dualVaultManager) {
+          throw new Error('Dual vault manager not initialized');
+        }
+        const result = await handleSwitchProject(args as any, dualVaultManager);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'search_cross_vault': {
+        if (!dualVaultManager) {
+          throw new Error('Dual vault manager not initialized');
+        }
+        const result = await handleSearchCrossVault(args as any, dualVaultManager);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+      
+      case 'categorize_memory': {
+        if (!dualVaultManager) {
+          throw new Error('Dual vault manager not initialized');
+        }
+        const result = await handleCategorizeMemory(args as any, dualVaultManager);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
         
       default:
         throw new Error(`Unknown tool: ${name}`);
@@ -2223,7 +1718,7 @@ async function performStartupHealthCheck(): Promise<StartupSummary> {
     if (vaultManager) {
       try {
         // Try to read from Implementation Roadmap
-        const roadmapPath = path.join(vaultManager.getVaultPath(), 'Project_Context', 'Implementation Roadmap.md');
+        const roadmapPath = path.join(vaultManager.getVaultPath(), 'Planning', 'roadmaps', 'Implementation Roadmap.md');
         const { readFile } = await import('fs/promises');
         
         try {
@@ -2296,7 +1791,7 @@ async function displayStartupSummary(): Promise<void> {
   message += `- Working Memory Load: ${summary.context.workingMemoryLoad}%\n`;
   
   if (vaultManager) {
-    message += `\n📁 **Vault Index**: Check Project_Context/vault/VAULT_INDEX.md for details\n`;
+    message += `\n📁 **Vault Index**: Check ./vault/VAULT_INDEX.md for details\n`;
   }
   
   if (summary.context.activeTasks.length > 0) {
@@ -2377,7 +1872,7 @@ async function main() {
       console.error(`Project vault initialized: ${config.projectVaultPath}`);
       
       // Initialize DualVaultManager
-      const dualVaultManager = new DualVaultManager(
+      dualVaultManager = new DualVaultManager(
         projectObsidianManager,
         {
           coreVaultPath: config.coreVaultPath,

@@ -4,6 +4,7 @@
  */
 
 import { VaultManager } from '../vault-manager.js';
+import { DualVaultManager } from '../vault-manager-dual.js';
 import { StateManager } from '../state-manager.js';
 import { CodeIntelligenceTools } from './code-intelligence-tools.js';
 import { SessionLogger } from '../session-logger.js';
@@ -19,6 +20,7 @@ export class ToolRegistry {
   private baseTools: ToolDefinition[] = [];
   private services: {
     vaultManager?: VaultManager;
+    dualVaultManager?: DualVaultManager;
     stateManager?: StateManager;
     codeIntelligenceTools?: CodeIntelligenceTools;
     sessionLogger?: SessionLogger;
@@ -68,6 +70,11 @@ export class ToolRegistry {
       tools.push(...this.getTemplateTools());
     }
 
+    // Add dual vault tools if available
+    if (this.services.dualVaultManager) {
+      tools.push(...this.getDualVaultTools());
+    }
+
     return tools;
   }
 
@@ -100,6 +107,12 @@ export class ToolRegistry {
               type: 'object',
               description: 'Additional metadata to store with the memory',
               default: {}
+            },
+            vault: {
+              type: 'string',
+              description: 'Target vault for the memory (core, project, auto)',
+              enum: ['core', 'project', 'auto'],
+              default: 'auto'
             }
           },
           required: ['content']
@@ -123,6 +136,12 @@ export class ToolRegistry {
               type: 'number',
               description: 'Maximum number of memories to return',
               default: 5
+            },
+            vault: {
+              type: 'string',
+              description: 'Vault to search (core, project, both)',
+              enum: ['core', 'project', 'both'],
+              default: 'both'
             }
           },
           required: ['query']
@@ -580,6 +599,102 @@ export class ToolRegistry {
           required: ['templateId', 'variables', 'outputPath']
         },
       },
+    ];
+  }
+
+  private getDualVaultTools(): ToolDefinition[] {
+    return [
+      {
+        name: 'promote_to_core',
+        description: 'Promote a memory from project vault to core knowledge vault',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            memoryId: {
+              type: 'string',
+              description: 'ID of the memory to promote'
+            },
+            reason: {
+              type: 'string',
+              description: 'Reason for promotion'
+            }
+          },
+          required: ['memoryId']
+        }
+      },
+      {
+        name: 'get_vault_stats',
+        description: 'Get statistics about memories in each vault',
+        inputSchema: {
+          type: 'object',
+          properties: {}
+        }
+      },
+      {
+        name: 'switch_project',
+        description: 'Switch to a different project vault',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            projectPath: {
+              type: 'string',
+              description: 'Path to the new project vault'
+            },
+            projectName: {
+              type: 'string',
+              description: 'Name for the project'
+            }
+          },
+          required: ['projectPath']
+        }
+      },
+      {
+        name: 'search_cross_vault',
+        description: 'Search across both core and project vaults with weighted results',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Search query'
+            },
+            vaults: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Vaults to search (default: both)'
+            },
+            strategy: {
+              type: 'string',
+              enum: ['weighted', 'sequential', 'isolated'],
+              description: 'Search strategy'
+            },
+            limit: {
+              type: 'number',
+              description: 'Maximum results per vault',
+              default: 10
+            }
+          },
+          required: ['query']
+        }
+      },
+      {
+        name: 'categorize_memory',
+        description: 'Preview where a memory would be stored based on its content',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            content: {
+              type: 'string',
+              description: 'Memory content to categorize'
+            },
+            metadata: {
+              type: 'object',
+              description: 'Additional metadata'
+            }
+          },
+          required: ['content']
+        }
+      }
     ];
   }
 

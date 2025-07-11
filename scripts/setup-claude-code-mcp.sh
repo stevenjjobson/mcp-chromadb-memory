@@ -123,7 +123,7 @@ setup_mcp() {
             echo "Setting up Docker-based MCP server..."
             
             # Build Docker image if needed
-            if ! docker images | grep -q "mcp-chromadb-memory-mcp-memory"; then
+            if ! docker images | grep -q "mcp-chromadb-memory"; then
                 echo "Building Docker image..."
                 npm run docker:build
             fi
@@ -144,7 +144,7 @@ setup_mcp() {
                 -e USE_HYBRID_STORAGE=true \
                 -e OBSIDIAN_VAULT_PATH=/vault \
                 -e AUTO_START_SESSION_LOGGING=true \
-                mcp-chromadb-memory-mcp-memory
+                mcp-chromadb-memory
             
             echo -e "${GREEN}✅ Docker MCP server configured!${NC}"
             ;;

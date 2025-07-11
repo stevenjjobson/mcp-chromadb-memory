@@ -4,19 +4,22 @@ Welcome to the documentation for the Cognitive State Management Platform. This d
 
 ## 📚 Documentation Structure
 
-### [Getting Started](./getting-started/)
-- **[Installation Guide](./getting-started/installation.md)** - Set up the platform
-- **[Quick Start](./getting-started/quick-start.md)** - Get running in minutes
-- **[Claude Desktop Setup](./getting-started/claude-desktop-setup.md)** - Configure for Claude Desktop
-- **[Enhanced Memory Summary](./getting-started/enhanced-memory-summary.md)** - Overview of memory features
+### Getting Started
+- **[Dual Vault Quick Start](./guides/dual-vault-quickstart.md)** - Get up and running with dual vault architecture
+- **[MCP Configuration Guide](./guides/mcp-configuration-guide.md)** - Configure for Claude Desktop and Claude Code
+- **[Claude Desktop Config](./guides/claude-desktop-config.md)** - Detailed Claude Desktop setup
+- **[Claude Code vs Desktop](./guides/claude-code-vs-desktop-config.md)** - Understanding the differences
+- **[PostgreSQL Setup](./guides/postgresql-setup.md)** - Database configuration
 
-### [Guides](./guides/)
+### Guides
 - **[Memory Usage Guide](./guides/memory-usage.md)** - Effectively use the memory system
 - **[Code Intelligence Guide](./guides/code-intelligence.md)** - Code-aware features and tools
 - **[File Search Guide](./guides/file-search.md)** - Fast file and folder searching
 - **[Hybrid Storage Guide](./guides/hybrid-storage.md)** - PostgreSQL + ChromaDB architecture
 - **[Hook Scripts Guide](./guides/hook-scripts.md)** - Smart tool optimization with 94% token reduction
 - **[Hooks Setup](./guides/hooks-setup.md)** - Configure Claude Code hooks
+- **[Docker Troubleshooting](./guides/docker-mcp-troubleshooting.md)** - Common Docker issues
+- **[Dual Vault Migration](./guides/DUAL_VAULT_MIGRATION_GUIDE.md)** - Migrate to dual vault architecture
 
 ### [Architecture](./architecture/)
 - **[Platform Overview](./architecture/platform-overview.md)** - High-level system design
@@ -33,14 +36,18 @@ Welcome to the documentation for the Cognitive State Management Platform. This d
 ### [API Reference](./api/)
 - **[Tools Reference](./api/tools-reference.md)** - Complete MCP tools documentation
 
-## 🗂️ Project Context (Obsidian Vault)
+## 🗂️ Vault Documentation
 
-The `Project_Context/` folder serves as an Obsidian vault containing:
-- Architecture decisions and ADRs
-- Development session logs
-- Knowledge base and setup guides
-- Planning documents and roadmaps
-- Templates for various document types
+The `vault/` folder serves as an Obsidian vault containing:
+- **Architecture** - System design and technical decisions
+- **Development** - Implementation details and session logs
+- **Knowledge** - Guides and best practices
+- **Planning** - Roadmaps and future plans
+- **References** - External documentation and APIs
+- **Templates** - Reusable document templates
+- **Archive** - Historical documents
+
+See [Vault Index](../vault/VAULT_INDEX.md) for detailed vault contents.
 
 ## 🧪 Testing
 
@@ -68,9 +75,22 @@ The platform implementation is in `src/`:
 - Service layer
 - Type definitions
 
+## 🎯 Specialized Implementations
+
+### CoachNTT
+A conversational AI implementation with voice capabilities:
+- [CoachNTT Overview](../CoachNTT/README.md)
+- [Implementation Guide](../CoachNTT/IMPLEMENTATION_GUIDE.md)
+- [Implementation Summary](../CoachNTT/IMPLEMENTATION_SUMMARY.md)
+
+## 📦 Archive
+
+Historical documentation and deprecated guides are stored in [docs/archive/](./archive/).
+
 ## 🚀 Quick Links
 
-- [Platform Vision](../Project_Context/Architecture/Platform%20Approach%20-%20Cognitive%20State%20Management.md)
-- [Implementation Roadmap](../Project_Context/Planning/roadmaps/Implementation%20Roadmap.md)
+- [Platform Vision](../vault/Architecture/Platform%20Approach%20-%20Cognitive%20State%20Management.md)
+- [Implementation Roadmap](../vault/Planning/roadmaps/Implementation%20Roadmap.md)
 - [Development Status](./roadmap/current-status.md)
 - [Contributing Guidelines](../CONTRIBUTING.md)
+- [Main Project README](../README.md)

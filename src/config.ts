@@ -141,7 +141,7 @@ export const config = ConfigSchema.parse({
   isDevelopment: ENVIRONMENT === 'DEVELOPMENT',
   
   // Core settings
-  chromaHost: isDocker ? 'chromadb' : (process.env.CHROMA_HOST || 'localhost'),
+  chromaHost: process.env.CHROMA_HOST || (isDocker ? 'chromadb' : 'localhost'),
   chromaPort: process.env.CHROMA_PORT,
   openaiApiKey: getSecret('openai_api_key', 'OPENAI_API_KEY'),
   memoryImportanceThreshold: parseFloat(process.env.MEMORY_IMPORTANCE_THRESHOLD || '0.7'),
@@ -178,9 +178,9 @@ export const config = ConfigSchema.parse({
   retryDelayMs: parseInt(process.env.RETRY_DELAY_MS || '1000'),
   
   // PostgreSQL configuration
-  postgresHost: isDocker ? (ENVIRONMENT === 'DEVELOPMENT' ? 'postgres-DEVELOPMENT' : 'postgres') : (process.env.POSTGRES_HOST || 'localhost'),
+  postgresHost: process.env.POSTGRES_HOST || (isDocker ? (ENVIRONMENT === 'DEVELOPMENT' ? 'postgres-DEVELOPMENT' : 'postgres') : 'localhost'),
   postgresPort: parseInt(process.env.POSTGRES_PORT || (ENVIRONMENT === 'DEVELOPMENT' ? '5433' : '5432')),
-  postgresDatabase: process.env.POSTGRES_DATABASE || (ENVIRONMENT === 'DEVELOPMENT' ? 'mcp_memory_dev' : 'mcp_memory'),
+  postgresDatabase: process.env.POSTGRES_DB || process.env.POSTGRES_DATABASE || (ENVIRONMENT === 'DEVELOPMENT' ? 'mcp_memory_dev' : 'mcp_memory'),
   postgresUser: process.env.POSTGRES_USER || 'mcp_user',
   postgresPassword: getSecret('postgres_password', 'POSTGRES_PASSWORD') || 'mcp_memory_pass',
   postgresPoolMax: parseInt(process.env.POSTGRES_POOL_MAX || '20'),
@@ -207,7 +207,7 @@ export const config = ConfigSchema.parse({
   // Vault configuration
   vaultMode: (process.env.VAULT_MODE as 'single' | 'dual' | 'multi') || 'single',
   coreVaultPath: process.env.CORE_VAULT_PATH,
-  projectVaultPath: process.env.PROJECT_VAULT_PATH || process.env.OBSIDIAN_VAULT_PATH,
+  projectVaultPath: process.env.PROJECT_VAULT_PATH || process.env.OBSIDIAN_VAULT_PATH || './vault',
   defaultVaultContext: (process.env.DEFAULT_VAULT_CONTEXT as 'core' | 'project') || 'project',
   enableCrossVaultSearch: process.env.ENABLE_CROSS_VAULT_SEARCH === 'true',
   vaultSearchStrategy: (process.env.VAULT_SEARCH_STRATEGY as 'weighted' | 'sequential' | 'parallel') || 'weighted',

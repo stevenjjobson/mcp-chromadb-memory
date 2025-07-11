@@ -115,7 +115,7 @@ test_mcp_server() {
         -e POSTGRES_PASSWORD=memory123 \
         -e POSTGRES_DB=memory_platform \
         -e OPENAI_API_KEY=${OPENAI_API_KEY:-"test-key"} \
-        mcp-chromadb-memory-mcp-memory \
+        mcp-chromadb-memory \
         node dist/index.js --version > /dev/null 2>&1
     
     if [ $? -eq 0 ]; then

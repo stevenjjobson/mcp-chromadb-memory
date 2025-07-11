@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "activeVaultId": "vault_1751851868520_e87wbfsrf",
+  "activeVaultId": "project_1752185738167_h33qx6vfl",
   "vaults": {
     "vault_1751851868520_e87wbfsrf": {
       "id": "vault_1751851868520_e87wbfsrf",
@@ -15,11 +15,40 @@
         "source": "obsidian",
         "description": "Project knowledge base and session logs for MCP ChromaDB Memory Server"
       }
+    },
+    "project_1752185738167_h33qx6vfl": {
+      "id": "project_1752185738167_h33qx6vfl",
+      "name": "Project Vault",
+      "path": "./vault",
+      "type": "project",
+      "created": "2025-07-10T22:15:38.167Z",
+      "lastAccessed": "2025-07-10T22:15:38.167Z",
+      "lastModified": "2025-07-10T22:15:38.167Z",
+      "isActive": true,
+      "metadata": {
+        "vaultType": "project",
+        "source": "obsidian"
+      }
+    },
+    "core_1752185738167_7tbg0pjmc": {
+      "id": "core_1752185738167_7tbg0pjmc",
+      "name": "Core Knowledge Vault",
+      "path": "/mnt/c/Users/Steve/Obsidian/StevesVault",
+      "type": "personal",
+      "created": "2025-07-10T22:15:38.167Z",
+      "lastAccessed": "2025-07-10T22:15:38.167Z",
+      "lastModified": "2025-07-10T22:15:38.167Z",
+      "isActive": true,
+      "metadata": {
+        "vaultType": "core",
+        "source": "obsidian"
+      }
     }
   },
   "defaultSettings": {
     "autoSwitch": true,
     "backupOnSwitch": true,
     "compressBackups": true
-  }
+  },
+  "coreVaultId": "core_1752185738167_7tbg0pjmc"
 }

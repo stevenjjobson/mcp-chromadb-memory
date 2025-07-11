@@ -12,7 +12,7 @@ The platform is designed to:
 - Provide multi-project support with instant context switching
 - Enable team knowledge sharing and collaboration
 
-See [Platform Approach](./Project_Context/Architecture/Platform%20Approach%20-%20Cognitive%20State%20Management.md) for the complete vision.
+See [Platform Approach](./vault/Architecture/Platform%20Approach%20-%20Cognitive%20State%20Management.md) for the complete vision.
 
 ## Startup Procedure
 
@@ -36,7 +36,7 @@ You'll see a startup summary in the console showing:
 - 💡 **Recommendations**: System optimization suggestions
 
 ### 3. Vault Index Generation
-The system automatically generates/updates `Project_Context/VAULT_INDEX.md` which contains:
+The system automatically generates/updates `vault/VAULT_INDEX.md` which contains:
 - Real-time system health dashboard
 - Memory system statistics
 - Active context and recent sessions
@@ -50,7 +50,7 @@ The system automatically generates/updates `Project_Context/VAULT_INDEX.md` whic
 
 ### Quick Start
 1. **Check the startup summary** in your console for system status
-2. **View the Vault Index** at `Project_Context/vault/VAULT_INDEX.md` for detailed information
+2. **View the Vault Index** at `vault/VAULT_INDEX.md` for detailed information
 3. **Review active tasks** to understand current work
 4. **Use memory recall** to retrieve previous context
 
@@ -84,9 +84,8 @@ If automatic logging is not enabled, you should:
 **Current Version**: 2.1 (Cognitive State Management Platform with Code Intelligence)
 **Status**: Phase 3 COMPLETE - PostgreSQL Integration & Code Intelligence Operational
 
-See [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for the 20-day transformation plan.
-See [Development Status](./DEVELOPMENT_STATUS.md) for detailed progress.
-See [Code Intelligence Guide](./CODE_INTELLIGENCE_GUIDE.md) for code-aware features.
+See [Implementation Roadmap](./vault/Planning/roadmaps/Implementation%20Roadmap.md) for the 20-day transformation plan.
+See [Code Intelligence Guide](./docs/guides/code-intelligence.md) for code-aware features.
 
 ### Key Platform Features
 1. **Vault Management** (Implemented): Multi-project support with hot-swapping
@@ -315,7 +314,7 @@ When testing the memory server:
 ## Claude Desktop Setup
 
 The MCP server is configured in `%APPDATA%\Claude\claude_desktop_config.json` on Windows.
-See CLAUDE_DESKTOP_CONFIG_GUIDE.md for detailed configuration instructions.
+See [Claude Desktop Config Guide](./docs/guides/claude-desktop-config.md) for detailed configuration instructions.
 
 ## Claude Code CLI Setup
 
@@ -344,7 +343,7 @@ Claude Code CLI uses a different configuration method than Claude Desktop:
      -e OPENAI_API_KEY=$OPENAI_API_KEY
    ```
 
-See CLAUDE_CODE_VS_DESKTOP_CONFIG.md for complete details on the differences between Claude Desktop and Claude Code configurations.
+See [Claude Code vs Desktop Config](./docs/guides/claude-code-vs-desktop-config.md) for complete details on the differences between Claude Desktop and Claude Code configurations.
 
 ## Code Intelligence Configuration
 
@@ -394,12 +393,12 @@ See [CoachNTT Documentation](./CoachNTT/README.md) for complete details.
 When creating or saving documents in this project, follow these guidelines:
 
 ### Quick Storage Rules
-- **Development work** → `Project_Context/Development/`
-- **Technical designs** → `Project_Context/Architecture/`
-- **How-to guides** → `Project_Context/Knowledge/`
-- **Future plans** → `Project_Context/Planning/`
-- **External docs** → `Project_Context/References/`
-- **Old documents** → `Project_Context/Archive/`
+- **Development work** → `vault/Development/`
+- **Technical designs** → `vault/Architecture/`
+- **How-to guides** → `vault/Knowledge/`
+- **Future plans** → `vault/Planning/`
+- **External docs** → `vault/References/`
+- **Old documents** → `vault/Archive/`
 
 ### For Claude: Where to Save Documents
 When creating new documents, determine the type and save accordingly:
@@ -409,7 +408,7 @@ When creating new documents, determine the type and save accordingly:
 4. Roadmaps, feature plans → `Planning/roadmaps/`
 5. API docs, external references → `References/`
 
-**See the complete guide**: `Project_Context/Knowledge/DOCUMENT_STORAGE_GUIDE.md`
+**See the complete guide**: `vault/Knowledge/DOCUMENT_STORAGE_GUIDE.md`
 
 ## Hook Scripts for Optimized Tool Usage
 
@@ -425,9 +424,9 @@ For setup guides and detailed documentation, see:
 - **Hook Scripts Guide**: `docs/guides/hook-scripts.md` - Smart tool optimization with 94% token reduction
 - **Code Intelligence Guide**: `docs/guides/code-intelligence.md` - Using code-aware features
 - **Memory Usage Guide**: `docs/guides/memory-usage.md` - How to effectively use the memory system
-- **Dual Instance Setup**: `Project_Context/Development/DUAL_INSTANCE_SETUP.md` - Development environment isolation
+- **Dual Instance Setup**: `vault/Development/DUAL_INSTANCE_SETUP.md` - Development environment isolation
 - **Development Status**: `docs/roadmap/current-status.md` - Current progress and next steps
-- **Setup Guides**: `Project_Context/Knowledge/Setup/`
-- **Architecture Decisions**: `Project_Context/Architecture/decisions/`
-- **Historical Documents**: `Project_Context/Archive/`
-- **Session Logs**: `Project_Context/Sessions/`
+- **Setup Guides**: `vault/Knowledge/Setup/`
+- **Architecture Decisions**: `vault/Architecture/decisions/`
+- **Historical Documents**: `vault/Archive/`
+- **Session Logs**: `vault/Sessions/`
