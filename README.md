@@ -128,7 +128,7 @@ See [Platform Approach](./vault/Architecture/Platform%20Approach%20-%20Cognitive
 3. **Start services**
    ```bash
    # For Claude Desktop - start ChromaDB and PostgreSQL (both required)
-   docker-compose up -d chromadb postgres
+   docker-compose up -d coachntt-chromadb coachntt-postgres
    
    # Or use the convenience script (Windows)
    .\start-chromadb.ps1
@@ -138,7 +138,7 @@ See [Platform Approach](./vault/Architecture/Platform%20Approach%20-%20Cognitive
 
 4. **Verify installation**
    ```bash
-   docker-compose logs -f chromadb-memory
+   docker-compose logs -f coachntt-chromadb
    ```
 
 > **Note**: The MCP server container will exit immediately when run standalone. This is normal behavior - MCP servers communicate via stdio and need a client to connect. Use the Claude Desktop configuration below to properly connect to the server.
@@ -191,7 +191,7 @@ See [Dual Vault Quick Start Guide](./docs/guides/dual-vault-quickstart.md) for c
 2. **Start required services**
    ```bash
    # Both ChromaDB and PostgreSQL are required
-   docker-compose up -d chromadb postgres
+   docker-compose up -d coachntt-chromadb coachntt-postgres
    ```
 
 3. **Build and run**
@@ -244,11 +244,11 @@ OBSIDIAN_VAULT_PATH=/path/to/your/vault
 
 # Memory Configuration
 MEMORY_IMPORTANCE_THRESHOLD=0.7    # Minimum importance score to store (0-1)
-MEMORY_COLLECTION_NAME=ai_memories
+MEMORY_COLLECTION_NAME=coachntt_memories
 MAX_MEMORY_RESULTS=10
 
 # Server Configuration
-MCP_SERVER_NAME=ai-memory-server
+MCP_SERVER_NAME=coachntt-cognitive-server
 MCP_SERVER_VERSION=1.0.0
 ```
 
@@ -270,14 +270,20 @@ MCP_SERVER_VERSION=1.0.0
         "run",
         "-i",
         "--rm",
-        "--network", "mcp-chromadb-memory_memory-network",
+        "--network", "mcp-chromadb-memory_coachntt-platform-network",
         "-v", "C:/Users/Steve/Dockers/mcp-chromadb-memory/vault:/vault:rw",
         "-e", "DOCKER_CONTAINER=true",
-        "-e", "CHROMA_HOST=chromadb",
+        "-e", "CHROMA_HOST=coachntt-chromadb",
         "-e", "CHROMA_PORT=8000",
+        "-e", "POSTGRES_HOST=coachntt-postgres",
+        "-e", "POSTGRES_PORT=5432",
+        "-e", "POSTGRES_USER=coachntt_user",
+        "-e", "POSTGRES_PASSWORD=coachntt_pass",
+        "-e", "POSTGRES_DB=coachntt_cognitive_db",
+        "-e", "USE_HYBRID_STORAGE=true",
         "-e", "OBSIDIAN_VAULT_PATH=/vault",
         "-e", "AUTO_START_SESSION_LOGGING=true",
-        "-e", "SESSION_LOGGING_PROJECT_NAME=MCP ChromaDB Memory",
+        "-e", "SESSION_LOGGING_PROJECT_NAME=CoachNTT Cognitive Platform",
         "mcp-chromadb-memory-mcp-memory"
       ]
     }

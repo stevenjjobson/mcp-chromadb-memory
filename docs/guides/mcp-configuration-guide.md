@@ -40,8 +40,8 @@ Each client uses a different configuration format and has unique requirements.
       "command": "docker",
       "args": [
         "run", "-i", "--rm",
-        "--name", "claude-mcp-memory",
-        "--network", "mcp-chromadb-memory_memory-network",
+        "--name", "coachntt-cognitive-server",
+        "--network", "mcp-chromadb-memory_coachntt-platform-network",
         "-v", "C:/Users/Steve/Obsidian/StevesVault:/core-vault:rw",
         "-v", "C:/Users/Steve/Dockers/mcp-chromadb-memory/vault:/project-vault:rw",
         "-e", "OPENAI_API_KEY=sk-proj-YOUR-KEY-HERE",
@@ -64,8 +64,8 @@ Each client uses a different configuration format and has unique requirements.
       "command": "docker",
       "args": [
         "run", "-i", "--rm",
-        "--name", "claude-mcp-memory",
-        "--network", "mcp-chromadb-memory_memory-network",
+        "--name", "coachntt-cognitive-server",
+        "--network", "mcp-chromadb-memory_coachntt-platform-network",
         "-v", "C:/Users/Steve/Obsidian/StevesVault:/core-vault:rw",
         "-v", "${PWD}/vault:/project-vault:rw",
         "-e", "OPENAI_API_KEY=${OPENAI_API_KEY}",

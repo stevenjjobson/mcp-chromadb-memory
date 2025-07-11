@@ -3,9 +3,9 @@ import { z } from 'zod';
 import path from 'path';
 import fs from 'fs';
 
-// Determine which environment to load
-const ENVIRONMENT = process.env.ENVIRONMENT_NAME || 'PRODUCTION';
-const envFile = ENVIRONMENT === 'DEVELOPMENT' ? '.env.DEVELOPMENT' : '.env.PRODUCTION';
+// Load production environment configuration
+const ENVIRONMENT = 'PRODUCTION';
+const envFile = '.env.PRODUCTION';
 
 // Load .env file - handle Windows paths
 // Suppress dotenv console output by redirecting process.stdout temporarily
@@ -178,11 +178,11 @@ export const config = ConfigSchema.parse({
   retryDelayMs: parseInt(process.env.RETRY_DELAY_MS || '1000'),
   
   // PostgreSQL configuration
-  postgresHost: process.env.POSTGRES_HOST || (isDocker ? (ENVIRONMENT === 'DEVELOPMENT' ? 'postgres-DEVELOPMENT' : 'postgres') : 'localhost'),
-  postgresPort: parseInt(process.env.POSTGRES_PORT || (ENVIRONMENT === 'DEVELOPMENT' ? '5433' : '5432')),
-  postgresDatabase: process.env.POSTGRES_DB || process.env.POSTGRES_DATABASE || (ENVIRONMENT === 'DEVELOPMENT' ? 'mcp_memory_dev' : 'mcp_memory'),
-  postgresUser: process.env.POSTGRES_USER || 'mcp_user',
-  postgresPassword: getSecret('postgres_password', 'POSTGRES_PASSWORD') || 'mcp_memory_pass',
+  postgresHost: process.env.POSTGRES_HOST || (isDocker ? 'coachntt-postgres' : 'localhost'),
+  postgresPort: parseInt(process.env.POSTGRES_PORT || '5432'),
+  postgresDatabase: process.env.POSTGRES_DB || process.env.POSTGRES_DATABASE || 'coachntt_cognitive_db',
+  postgresUser: process.env.POSTGRES_USER || 'coachntt_user',
+  postgresPassword: getSecret('postgres_password', 'POSTGRES_PASSWORD') || 'coachntt_pass',
   postgresPoolMax: parseInt(process.env.POSTGRES_POOL_MAX || '20'),
   postgresPoolMin: parseInt(process.env.POSTGRES_POOL_MIN || '5'),
   postgresIdleTimeout: parseInt(process.env.POSTGRES_IDLE_TIMEOUT || '30000'),

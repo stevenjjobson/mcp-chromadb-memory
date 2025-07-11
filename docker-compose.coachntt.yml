@@ -1,77 +1,80 @@
+# CoachNTT Development Environment - Complete development stack with voice features
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.coachntt.yml up -d
+#
+# This adds the CoachNTT cognitive server to the base infrastructure for local development.
+# Voice features can be enabled via environment variables.
+
 services:
-  # PostgreSQL with pgvector for CoachNTT Voice Features
-  coachntt-postgres-voice:
-    image: pgvector/pgvector:pg16
-    container_name: coachntt-postgres-voice
-    ports:
-      - "5433:5432"  # Different port to avoid conflicts
-    environment:
-      - POSTGRES_DB=coachntt_voice_db
-      - POSTGRES_USER=coachntt_user
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-coachntt_pass}
-    volumes:
-      - postgres_coachntt_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U coachntt_user -d coachntt_voice_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - coachntt-voice-network
-
-  coachntt-chromadb-voice:
-    image: chromadb/chroma:latest
-    container_name: coachntt-chromadb-voice
-    ports:
-      - "8002:8000"  # Different port to avoid conflicts
-    volumes:
-      - ./data/chroma-coachntt-voice:/chroma/chroma
-    environment:
-      - IS_PERSISTENT=TRUE
-      - PERSIST_DIRECTORY=/chroma/chroma
-      - ANONYMIZED_TELEMETRY=FALSE
-    networks:
-      - coachntt-voice-network
-
-  # CoachNTT Voice Server (specialized for audio features)
-  coachntt-voice:
-    build:
-      context: .
-      dockerfile: Dockerfile.coachntt
-    container_name: coachntt-voice-server
+  # CoachNTT Cognitive Server - Main development server
+  coachntt-cognitive:
+    build: .
+    container_name: coachntt-cognitive-server
+    restart: "no"
     depends_on:
-      - coachntt-chromadb-voice
-      - coachntt-postgres-voice
+      - coachntt-chromadb
+      - coachntt-postgres
     environment:
+      # Core Configuration
       - DOCKER_CONTAINER=true
-      - CHROMA_HOST=coachntt-chromadb-voice
+      - CHROMA_HOST=coachntt-chromadb
       - CHROMA_PORT=8000
-      - POSTGRES_HOST=coachntt-postgres-voice
+      - POSTGRES_HOST=coachntt-postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_DATABASE=coachntt_voice_db
-      - POSTGRES_USER=coachntt_user
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE:-coachntt_cognitive_db}
+      - POSTGRES_USER=${POSTGRES_USER:-coachntt_user}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-coachntt_pass}
-      - USE_HYBRID_STORAGE=true
-      - CODE_INDEXING_ENABLED=true
-      - MCP_SERVER_NAME=CoachNTT
-      - MCP_SERVER_VERSION=1.0.0
+      
+      # Memory Configuration
+      - MEMORY_IMPORTANCE_THRESHOLD=${MEMORY_IMPORTANCE_THRESHOLD:-0.7}
+      - MEMORY_COLLECTION_NAME=${MEMORY_COLLECTION_NAME:-coachntt_memories}
+      - MAX_MEMORY_RESULTS=${MAX_MEMORY_RESULTS:-10}
+      
+      # Server Configuration
+      - MCP_SERVER_NAME=${MCP_SERVER_NAME:-coachntt-cognitive-server}
+      - MCP_SERVER_VERSION=${MCP_SERVER_VERSION:-2.1.0}
+      
+      # Platform Features
+      - USE_HYBRID_STORAGE=${USE_HYBRID_STORAGE:-true}
+      - CODE_INDEXING_ENABLED=${CODE_INDEXING_ENABLED:-true}
+      
+      # Session Logging
+      - AUTO_START_SESSION_LOGGING=${AUTO_START_SESSION_LOGGING:-true}
+      - SESSION_LOGGING_PROJECT_NAME=${SESSION_LOGGING_PROJECT_NAME:-CoachNTT Cognitive Platform}
+      - SESSION_LOGGING_SAVE_ON_EXIT=${SESSION_LOGGING_SAVE_ON_EXIT:-true}
+      
+      # Voice Features (optional)
+      - COACHNTT_VOICE_ENABLED=${COACHNTT_VOICE_ENABLED:-false}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - ELEVENLABS_DEFAULT_VOICE=${ELEVENLABS_DEFAULT_VOICE:-EXAVITQu4vr4xnSDxMaL}
+      - ELEVENLABS_MODEL=${ELEVENLABS_MODEL:-eleven_monolingual_v1}
+      
+      # Dual Vault Configuration
+      - VAULT_MODE=${VAULT_MODE:-dual}
+      - CORE_VAULT_PATH=/core-vault
+      - PROJECT_VAULT_PATH=/project-vault
+      - OBSIDIAN_VAULT_PATH=/project-vault
+      
     secrets:
       - openai_api_key
+      - github_access_token
+      
     volumes:
-      - ./data/coachntt:/app/data
+      - ./data/memories:/app/data
+      - ${CORE_VAULT_HOST_PATH:-C:/Users/Steve/Obsidian/StevesVault}:/core-vault:rw
+      - ${PROJECT_VAULT_HOST_PATH:-./vault}:/project-vault:rw
+      
     networks:
-      - coachntt-voice-network
-    command: ["node", "dist/index-coachntt.js"]
+      - coachntt-platform-network
+      
+    command: ["node", "dist/index.js"]
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('Health check passed')"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
 
-networks:
-  coachntt-voice-network:
-    driver: bridge
-
-volumes:
-  postgres_coachntt_data:
-    driver: local
-
-secrets:
-  openai_api_key:
-    file: ./secrets/openai_api_key.txt
+# Note: Base infrastructure (postgres, chromadb) is defined in docker-compose.yml
+# This overlay adds the development server with all CoachNTT features

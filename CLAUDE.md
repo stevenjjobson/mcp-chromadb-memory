@@ -268,10 +268,10 @@ npm run docker:build
 # Run in Docker
 npm run docker:run
 
-# For dual-instance development
-./scripts/environment/env-manager.sh start-dev  # Start development environment
-./scripts/environment/env-manager.sh stop-dev   # Stop development environment
-./scripts/environment/env-manager.sh status     # Check status of both environments
+# For development with CoachNTT features
+docker-compose -f docker-compose.yml -f docker-compose.coachntt.yml up -d  # Start dev environment
+docker-compose -f docker-compose.yml -f docker-compose.coachntt.yml down   # Stop dev environment
+docker-compose ps                                                          # Check status
 ```
 
 ### Starting Required Services
@@ -279,10 +279,10 @@ npm run docker:run
 From the project directory:
 ```bash
 # For production (Claude Desktop) - Both services required
-docker-compose up -d chromadb postgres
+docker-compose up -d coachntt-chromadb coachntt-postgres
 
-# For development testing
-./scripts/environment/env-manager.sh start-dev
+# For development testing with CoachNTT features
+docker-compose -f docker-compose.yml -f docker-compose.coachntt.yml up -d
 ```
 
 **Important**: PostgreSQL is now required alongside ChromaDB for the hybrid storage architecture. The system will not function without both databases running.

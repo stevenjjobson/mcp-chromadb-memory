@@ -1,25 +1,25 @@
 {
   "mcpServers": {
     "memory": {
-      "comment": "Main MCP ChromaDB Memory Server with dual vault support",
+      "comment": "CoachNTT Cognitive Platform - Main configuration with dual vault support",
       "command": "docker",
       "args": [
         "run",
         "-i",
         "--rm",
-        "--name", "claude-mcp-memory",
-        "--network", "mcp-chromadb-memory_memory-network",
+        "--name", "coachntt-cognitive-server",
+        "--network", "mcp-chromadb-memory_coachntt-platform-network",
         "-v", "C:/path/to/your/core-vault:/core-vault:rw",
         "-v", "C:/path/to/your/project-vault:/project-vault:rw",
         "-e", "OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE",
         "-e", "DOCKER_CONTAINER=true",
-        "-e", "CHROMA_HOST=chromadb-memory",
+        "-e", "CHROMA_HOST=coachntt-chromadb",
         "-e", "CHROMA_PORT=8000",
-        "-e", "POSTGRES_HOST=postgres-memory",
+        "-e", "POSTGRES_HOST=coachntt-postgres",
         "-e", "POSTGRES_PORT=5432",
-        "-e", "POSTGRES_USER=mcp_user",
-        "-e", "POSTGRES_PASSWORD=mcp_memory_pass",
-        "-e", "POSTGRES_DB=mcp_memory",
+        "-e", "POSTGRES_USER=coachntt_user",
+        "-e", "POSTGRES_PASSWORD=coachntt_pass",
+        "-e", "POSTGRES_DB=coachntt_cognitive_db",
         "-e", "USE_HYBRID_STORAGE=true",
         "-e", "ENABLE_DUAL_WRITE=true",
         "-e", "POSTGRES_READ_RATIO=0.5",
@@ -30,7 +30,7 @@
         "-e", "DEFAULT_VAULT_CONTEXT=project",
         "-e", "ENABLE_CROSS_VAULT_SEARCH=true",
         "-e", "AUTO_START_SESSION_LOGGING=true",
-        "-e", "SESSION_LOGGING_PROJECT_NAME=Your Project Name",
+        "-e", "SESSION_LOGGING_PROJECT_NAME=CoachNTT Cognitive Platform",
         "-e", "SESSION_LOGGING_SAVE_ON_EXIT=true",
         "-e", "CODE_INDEXING_ENABLED=true",
         "-e", "CODE_PATTERN_DETECTION=true",
@@ -38,6 +38,9 @@
         "-e", "MEMORY_TIER_ENABLED=true",
         "-e", "ENABLE_MIGRATION_SERVICE=true",
         "-e", "ENABLE_PATTERN_SERVICE=true",
+        "-e", "COACHNTT_PLATFORM_VERSION=2.1.0",
+        "-e", "MCP_SERVER_NAME=coachntt-cognitive-server",
+        "-e", "MEMORY_COLLECTION_NAME=coachntt_memories",
         "mcp-chromadb-memory-mcp-memory"
       ]
     },
@@ -53,32 +56,37 @@
         "CHROMA_PORT": "8000",
         "POSTGRES_HOST": "localhost",
         "POSTGRES_PORT": "5432",
-        "POSTGRES_USER": "mcp_user",
-        "POSTGRES_PASSWORD": "mcp_memory_pass",
-        "POSTGRES_DB": "mcp_memory",
+        "POSTGRES_USER": "coachntt_user",
+        "POSTGRES_PASSWORD": "coachntt_pass",
+        "POSTGRES_DB": "coachntt_cognitive_db",
         "USE_HYBRID_STORAGE": "true",
         "VAULT_MODE": "dual",
         "CORE_VAULT_PATH": "C:/path/to/your/core-vault",
-        "PROJECT_VAULT_PATH": "C:/path/to/your/project-vault"
+        "PROJECT_VAULT_PATH": "C:/path/to/your/project-vault",
+        "COACHNTT_PLATFORM_VERSION": "2.1.0",
+        "MCP_SERVER_NAME": "coachntt-cognitive-server",
+        "MEMORY_COLLECTION_NAME": "coachntt_memories"
       }
     },
-    "coachntt": {
-      "comment": "CoachNTT specialized implementation with audio",
+    "coachntt-voice": {
+      "comment": "CoachNTT with voice features enabled",
       "command": "docker",
       "args": [
         "run",
         "-i",
         "--rm",
-        "--network", "coachntt-network",
-        "-v", "C:/path/to/your/project:/project:ro",
+        "--name", "coachntt-voice-server",
+        "--network", "mcp-chromadb-memory_coachntt-platform-network",
+        "-v", "C:/path/to/your/core-vault:/core-vault:rw",
+        "-v", "C:/path/to/your/project-vault:/project-vault:rw",
         "-e", "OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE",
         "-e", "ELEVENLABS_API_KEY=YOUR_ELEVENLABS_API_KEY_HERE",
         "-e", "DOCKER_CONTAINER=true",
-        "-e", "CHROMA_HOST=chromadb-coachntt",
+        "-e", "CHROMA_HOST=coachntt-chromadb",
         "-e", "CHROMA_PORT=8000",
-        "-e", "POSTGRES_HOST=postgres-coachntt",
+        "-e", "POSTGRES_HOST=coachntt-postgres",
         "-e", "POSTGRES_PORT=5432",
-        "-e", "POSTGRES_DATABASE=coachntt_memory",
+        "-e", "POSTGRES_DATABASE=coachntt_cognitive_db",
         "-e", "POSTGRES_USER=coachntt_user",
         "-e", "POSTGRES_PASSWORD=coachntt_pass",
         "-e", "USE_HYBRID_STORAGE=true",
@@ -86,9 +94,10 @@
         "-e", "CODE_INDEXING_ENABLED=true",
         "-e", "MEMORY_IMPORTANCE_THRESHOLD=0.6",
         "-e", "MAX_MEMORY_RESULTS=20",
+        "-e", "COACHNTT_VOICE_ENABLED=true",
         "-e", "ELEVENLABS_DEFAULT_VOICE=EXAVITQu4vr4xnSDxMaL",
         "-e", "ELEVENLABS_MODEL=eleven_monolingual_v1",
-        "coachntt-server"
+        "mcp-chromadb-memory-mcp-memory"
       ]
     }
   }
