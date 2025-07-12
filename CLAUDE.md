@@ -430,3 +430,49 @@ For setup guides and detailed documentation, see:
 - **Architecture Decisions**: `vault/Architecture/decisions/`
 - **Historical Documents**: `vault/Archive/`
 - **Session Logs**: `vault/Sessions/`
+
+## Memory: README and Documentation Maintenance
+
+### General README Maintenance Rules
+When editing, adding, or removing files in any folder that contains a README.md file, always:
+
+1. **Read First**: Read the README.md to understand the folder's purpose and documented rules
+2. **Update After Changes**: After modifying files in that folder, check if the README needs updating:
+   - Update file lists if files were added/removed
+   - Update descriptions if functionality changed
+   - Update examples if they reference modified files
+   - Update configuration instructions if settings changed
+   - Maintain the existing format and style
+3. **Preserve Important Content**: Keep all security notices, warnings, or important notes
+4. **Update References**: If files were renamed/removed, update all references to them
+
+### Project-Specific Rules for MCP ChromaDB Memory / CoachNTT Platform
+- **Branding Consistency**: Always use CoachNTT branding in examples:
+  - Services: `coachntt-postgres`, `coachntt-chromadb`
+  - Database: `coachntt_cognitive_db`
+  - Network: `mcp-chromadb-memory_coachntt-platform-network`
+- **Environment**: Remove any references to DEVELOPMENT environment (only PRODUCTION exists now)
+- **Paths**: Use placeholders like `YOUR_PATH_HERE` or `/path/to/your/vault` instead of hardcoded paths
+- **API Keys**: Always use placeholders like `YOUR_OPENAI_API_KEY_HERE`
+- **CoachNTT Updates**: When updating the CoachNTT implementation specifically, always update `CoachNTT/README.md`
+
+This ensures documentation stays synchronized with actual folder contents and maintains consistency across the project.
+
+## Documentation File Placement Rules
+When creating documentation files or scripts, ALWAYS follow these placement rules:
+
+1. **Never place documentation in the root folder** - The root should only contain essential project files (README.md, CONTRIBUTING.md, CLAUDE.md, etc.)
+2. **Use existing folder structures**:
+   - `/docs/` - Technical documentation, API docs, guides, architecture docs
+   - `/vault/` - Project knowledge, development logs, planning docs, references
+   - `/scripts/` - Utility scripts, setup scripts, operational tools
+3. **If unsure, ask the user** where to place the file rather than defaulting to root
+4. **Check for existing similar files** to determine the appropriate location
+5. **Test files** should go in `/tests/` or appropriate subdirectories
+
+Examples:
+- Architecture documentation → `/docs/architecture/` or `/vault/Architecture/`
+- Development logs → `/vault/Development/`
+- Test reports → `/docs/testing/` or `/vault/Development/`
+- Utility scripts → `/scripts/utilities/`
+- Setup guides → `/docs/guides/` or `/vault/Knowledge/Setup/`

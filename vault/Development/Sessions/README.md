@@ -1,10 +1,10 @@
 # Development Sessions
 
-This folder contains session logs from DEVELOPMENT environment testing.
+This folder contains development session logs and conversation histories.
 
 ## Important Note
 
-These sessions are from the DEVELOPMENT environment and may contain:
+These sessions may contain:
 - Experimental features being tested
 - Potential errors and debugging sessions
 - Incomplete implementations

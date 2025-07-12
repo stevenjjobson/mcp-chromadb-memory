@@ -102,12 +102,17 @@ See [Platform Approach](./vault/Architecture/Platform%20Approach%20-%20Cognitive
 - **[Dual Vault Migration Guide](./docs/guides/DUAL_VAULT_MIGRATION_GUIDE.md)** - Migrate from single vault
 
 ### Core Documentation
-- **[Memory Usage Guide](./MEMORY_USAGE_GUIDE.md)** - Learn how to effectively use the memory system
-- **[Hybrid Storage Guide](./HYBRID_STORAGE_GUIDE.md)** - PostgreSQL + ChromaDB hybrid architecture
-- **[Code Intelligence Guide](./CODE_INTELLIGENCE_GUIDE.md)** - Code-aware features and symbol indexing
+- **[Memory Usage Guide](./docs/guides/memory-usage.md)** - Learn how to effectively use the memory system
+- **[Hybrid Storage Guide](./docs/guides/hybrid-storage.md)** - PostgreSQL + ChromaDB hybrid architecture
+- **[Code Intelligence Guide](./docs/guides/code-intelligence.md)** - Code-aware features and symbol indexing
 - **[Dual Instance Setup](./vault/Development/DUAL_INSTANCE_SETUP.md)** - Set up isolated development environment
 - **[Development Status](./docs/roadmap/current-status.md)** - Current progress and roadmap
 - **[CoachNTT Implementation](./CoachNTT/README.md)** - Conversational AI with voice synthesis
+
+### 📚 New User Guides
+- **[Comprehensive Usage Guide](./docs/guides/COMPREHENSIVE_USAGE_GUIDE.md)** - Complete guide for Claude Code & Desktop with WSL/Windows paths
+- **[Quick Reference Card](./docs/guides/QUICK_REFERENCE_CARD.md)** - Essential commands and tips on one page
+- **[Maximizing Platform Value](./docs/guides/MAXIMIZING_PLATFORM_VALUE.md)** - Advanced techniques and productivity patterns
 
 ## 🚀 Quick Start
 
@@ -233,7 +238,7 @@ Create a `.env` file in the project root:
 
 ```env
 # ChromaDB Configuration
-CHROMA_HOST=chromadb          # Use 'localhost' for local development
+CHROMA_HOST=coachntt-chromadb  # Use 'localhost' for local development
 CHROMA_PORT=8000
 
 # OpenAI Configuration (required for embeddings)
@@ -279,7 +284,7 @@ MCP_SERVER_VERSION=1.0.0
         "-e", "POSTGRES_PORT=5432",
         "-e", "POSTGRES_USER=coachntt_user",
         "-e", "POSTGRES_PASSWORD=coachntt_pass",
-        "-e", "POSTGRES_DB=coachntt_cognitive_db",
+        "-e", "POSTGRES_DATABASE=coachntt_cognitive_db",
         "-e", "USE_HYBRID_STORAGE=true",
         "-e", "OBSIDIAN_VAULT_PATH=/vault",
         "-e", "AUTO_START_SESSION_LOGGING=true",
@@ -303,7 +308,13 @@ For local development without Docker:
       "env": {
         "OPENAI_API_KEY": "your-api-key-here",
         "CHROMA_HOST": "localhost",
-        "CHROMA_PORT": "8000"
+        "CHROMA_PORT": "8000",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432",
+        "POSTGRES_DATABASE": "coachntt_cognitive_db",
+        "POSTGRES_USER": "coachntt_user",
+        "POSTGRES_PASSWORD": "coachntt_pass",
+        "USE_HYBRID_STORAGE": "true"
       }
     }
   }
@@ -595,7 +606,7 @@ CODE_STREAMING_ENABLED=true
 CODE_CACHE_SIZE=1000
 ```
 
-See [Code Intelligence Guide](./CODE_INTELLIGENCE_GUIDE.md) for detailed usage and examples.
+See [Code Intelligence Guide](./docs/guides/code-intelligence.md) for detailed usage and examples.
 
 ## 🎯 Smart Tool Optimization
 
@@ -632,6 +643,8 @@ Grep pattern="class UserManager" include="*.ts"
 - **Cost Savings**: ~$2,820/month saved on API costs (based on 100 searches/day)
 
 The hooks work automatically in the background, requiring no configuration or user intervention.
+
+See [Hook Scripts Guide](./docs/guides/hook-scripts.md) for complete implementation details.
 
 ## 🏗️ Architecture
 
@@ -825,7 +838,7 @@ Run the configuration validator to check for common issues:
 
 2. **Common configuration errors**:
    - JSON syntax errors (use `python -m json.tool < config.json` to validate)
-   - Wrong container names (should be `chromadb-memory` and `postgres-memory`)
+   - Wrong container names (should be `coachntt-chromadb` and `coachntt-postgres`)
    - Hardcoded API keys (security risk but required for Claude Desktop)
    - Windows path issues (use forward slashes: `C:/Users/...`)
 
@@ -857,14 +870,14 @@ Run the configuration validator to check for common issues:
 1. **Check service names match**:
    ```yaml
    # docker-compose.yml should have:
-   postgres:
-     container_name: postgres-memory
-   chromadb:
-     container_name: chromadb-memory
+   coachntt-postgres:
+     container_name: coachntt-postgres
+   coachntt-chromadb:
+     container_name: coachntt-chromadb
    ```
 
 2. **Verify credentials match**:
-   - PostgreSQL: `mcp_user` / `mcp_memory_pass` / `mcp_memory`
+   - PostgreSQL: `coachntt_user` / `coachntt_pass` / `coachntt_cognitive_db`
    - These must be consistent across all config files
 
 3. **Check if services are healthy**:

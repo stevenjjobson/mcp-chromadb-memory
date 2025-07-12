@@ -38,7 +38,6 @@ const ConfigSchema = z.object({
   
   // Environment
   isDocker: z.boolean().default(false),
-  isDevelopment: z.boolean().default(false),
   environment: z.string().default('PRODUCTION'),
 });
 
@@ -65,7 +64,6 @@ const loadConfig = () => {
     codeIndexingEnabled: process.env.CODE_INDEXING_ENABLED === 'true',
     tierEnabled: process.env.TIER_ENABLED === 'true',
     isDocker: process.env.DOCKER_CONTAINER === 'true',
-    isDevelopment: process.env.NODE_ENV === 'development',
     environment: process.env.ENVIRONMENT_NAME || 'PRODUCTION',
   };
   

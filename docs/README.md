@@ -87,6 +87,16 @@ A conversational AI implementation with voice capabilities:
 
 Historical documentation and deprecated guides are stored in [docs/archive/](./archive/).
 
+## 📋 Meta Documentation
+
+Documentation about documentation:
+- **[Documentation Organization](./meta/DOCUMENTATION_ORGANIZATION.md)** - Overview of documentation structure
+
+## 🧪 Testing Documentation
+
+Testing reports and guides:
+- **[Functionality Test Report](./testing/FUNCTIONALITY_TEST_REPORT.md)** - Comprehensive functionality analysis
+
 ## 🚀 Quick Links
 
 - [Platform Vision](../vault/Architecture/Platform%20Approach%20-%20Cognitive%20State%20Management.md)

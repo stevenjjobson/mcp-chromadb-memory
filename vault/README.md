@@ -1,4 +1,4 @@
-# Project_Context - Obsidian Vault & Knowledge Base
+# Vault - Obsidian Vault & Knowledge Base
 
 ## Overview
 
@@ -20,7 +20,7 @@ Unlike the traditional `docs/` folder (which contains technical documentation fo
 ## Structure
 
 ```
-Project_Context/
+vault/
 ├── Architecture/          # System design and technical architecture
 │   └── decisions/        # Architecture Decision Records (ADRs)
 ├── Development/          # Active development work
@@ -97,7 +97,7 @@ See [DOCUMENT_STORAGE_GUIDE.md](./Knowledge/DOCUMENT_STORAGE_GUIDE.md) for detai
 ## Configuration
 
 This vault is configured in:
-- `.env`: `OBSIDIAN_VAULT_PATH=./Project_Context`
+- `.env`: `OBSIDIAN_VAULT_PATH=./vault`
 - `vault-registry.json`: Tracks vault metadata
 - `.mcp.json`: Mounts this directory as `/vault` in Docker
 

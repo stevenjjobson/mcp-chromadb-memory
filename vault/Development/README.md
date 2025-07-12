@@ -1,6 +1,6 @@
 # Development Vault
 
-This is the isolated vault for the DEVELOPMENT environment. All sessions, notes, and data created while testing in the development environment will be stored here, completely separate from production data.
+This folder contains active development work, including implementation summaries, refactoring notes, and development session logs. All development-related documentation should be stored here.
 
 ## Structure
 

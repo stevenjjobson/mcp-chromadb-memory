@@ -58,6 +58,7 @@
     "openai": "^5.8.2",
     "ora": "^8.0.1",
     "pg": "^8.16.3",
+    "uuid": "^11.1.0",
     "zod": "^3.25.74"
   },
   "devDependencies": {
@@ -65,7 +66,7 @@
     "@types/jest": "^30.0.0",
     "@types/micromatch": "^4.0.0",
     "@types/moment": "^2.13.0",
-    "@types/node": "^24.0.10",
+    "@types/node": "^24.0.13",
     "@types/node-fetch": "^2.6.11",
     "jest": "^30.0.4",
     "nodemon": "^3.1.10",

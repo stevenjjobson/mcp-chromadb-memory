@@ -4,7 +4,7 @@ First off, thank you for considering contributing to this project! 🎉
 
 ## 🚀 Platform v2.1 Development
 
-We're currently transforming this project into a comprehensive **Cognitive State Management Platform** with advanced code intelligence features. This is an exciting time to contribute! See our [Implementation Roadmap](./Project_Context/Implementation%20Roadmap.md) for the full vision.
+We're currently transforming this project into a comprehensive **Cognitive State Management Platform** with advanced code intelligence features. This is an exciting time to contribute! See our [Implementation Roadmap](./vault/Planning/roadmaps/Implementation%20Roadmap.md) for the full vision.
 
 ### Current Focus Areas
 - Code intelligence system (symbol indexing and streaming search)

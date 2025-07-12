@@ -19,7 +19,11 @@
       "Bash(./scripts/env-manager.sh:*)",
       "Bash(mv:*)",
       "Bash(cp:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(docker logs:*)",
+      "Bash(curl:*)",
+      "Bash(npm run inspect:*)",
+      "Bash(npx tsx:*)"
     ],
     "deny": []
   },

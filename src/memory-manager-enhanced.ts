@@ -90,10 +90,6 @@ export class EnhancedMemoryManager {
   }
   
   async initialize(): Promise<void> {
-    if (this.config.isDevelopment) {
-      console.warn('🧪 Running in DEVELOPMENT mode - changes are isolated from production');
-    }
-    
     if (this.config.environment === 'PRODUCTION' && this.config.tierEnabled) {
       console.warn('⚠️  Hierarchical tiers are now enabled in PRODUCTION');
     }

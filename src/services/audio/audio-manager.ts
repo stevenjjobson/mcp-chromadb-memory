@@ -1,13 +1,13 @@
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
-import { ElevenLabsService } from './elevenlabs-service';
-import { FallbackTTSService } from './fallback-tts-service';
-import { WindowsAudioEngine } from './engines/windows-audio-engine';
-import { MacOSAudioEngine } from './engines/macos-audio-engine';
-import { LinuxAudioEngine } from './engines/linux-audio-engine';
-import { AudioEngine, TTSEngine, AudioQueueItem, SpeakOptions, AudioState, PlaybackOptions } from './types';
-import { Memory } from '../../types';
-import { logger } from '../../logging';
+import { ElevenLabsService } from './elevenlabs-service.js';
+import { FallbackTTSService } from './fallback-tts-service.js';
+import { WindowsAudioEngine } from './engines/windows-audio-engine.js';
+import { MacOSAudioEngine } from './engines/macos-audio-engine.js';
+import { LinuxAudioEngine } from './engines/linux-audio-engine.js';
+import { AudioEngine, TTSEngine, AudioQueueItem, SpeakOptions, AudioState, PlaybackOptions } from './types.js';
+import { Memory } from '../../types.js';
+import { logger } from '../../logging.js';
 
 export class AudioManager extends EventEmitter {
   private ttsEngine!: TTSEngine;

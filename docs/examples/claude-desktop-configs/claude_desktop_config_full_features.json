@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "memory": {
+    "CoachNTT.ai": {
       "comment": "CoachNTT Cognitive Platform - Main configuration with dual vault support",
       "command": "docker",
       "args": [
@@ -19,7 +19,7 @@
         "-e", "POSTGRES_PORT=5432",
         "-e", "POSTGRES_USER=coachntt_user",
         "-e", "POSTGRES_PASSWORD=coachntt_pass",
-        "-e", "POSTGRES_DB=coachntt_cognitive_db",
+        "-e", "POSTGRES_DATABASE=coachntt_cognitive_db",
         "-e", "USE_HYBRID_STORAGE=true",
         "-e", "ENABLE_DUAL_WRITE=true",
         "-e", "POSTGRES_READ_RATIO=0.5",
@@ -44,7 +44,7 @@
         "mcp-chromadb-memory-mcp-memory"
       ]
     },
-    "memory-local": {
+    "CoachNTT.ai-Local": {
       "comment": "Local development version (non-Docker)",
       "command": "node",
       "args": [
@@ -68,7 +68,7 @@
         "MEMORY_COLLECTION_NAME": "coachntt_memories"
       }
     },
-    "coachntt-voice": {
+    "CoachNTT.ai-Voice": {
       "comment": "CoachNTT with voice features enabled",
       "command": "docker",
       "args": [

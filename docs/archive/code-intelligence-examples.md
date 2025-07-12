@@ -5,8 +5,8 @@
 To test the code intelligence features with MCP Inspector, first ensure:
 
 1. ChromaDB is running (development instance on port 8001)
-2. The DEVELOPMENT environment is active
-3. CODE_INDEXING_ENABLED=true in .env.DEVELOPMENT
+2. The environment is configured correctly
+3. CODE_INDEXING_ENABLED=true in .env
 
 ### Start the MCP server in development mode:
 

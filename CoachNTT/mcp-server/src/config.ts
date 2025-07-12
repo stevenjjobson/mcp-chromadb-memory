@@ -3,9 +3,8 @@ import { z } from 'zod';
 import path from 'path';
 import fs from 'fs';
 
-// Load production environment configuration
-const ENVIRONMENT = 'PRODUCTION';
-const envFile = '.env.PRODUCTION';
+// Load environment configuration
+const envFile = '.env';
 
 // Load .env file - handle Windows paths
 // Suppress dotenv console output by redirecting process.stdout temporarily
@@ -49,7 +48,6 @@ const ConfigSchema = z.object({
   // Environment settings
   environment: z.string().default('PRODUCTION'),
   instanceLabel: z.string().default('🏭 PRODUCTION'),
-  isDevelopment: z.boolean().default(false),
   
   // Core settings
   chromaHost: z.string().default('localhost'),
@@ -121,9 +119,8 @@ const isDocker = process.env.DOCKER_CONTAINER === 'true';
 
 export const config = ConfigSchema.parse({
   // Environment settings
-  environment: ENVIRONMENT,
+  environment: 'PRODUCTION',
   instanceLabel: process.env.INSTANCE_LABEL || '🏭 PRODUCTION',
-  isDevelopment: ENVIRONMENT === 'DEVELOPMENT',
   
   // Core settings
   chromaHost: isDocker ? 'chromadb' : (process.env.CHROMA_HOST || 'localhost'),

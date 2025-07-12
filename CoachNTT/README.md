@@ -97,9 +97,9 @@ OPENAI_API_KEY=your-openai-key
 ELEVENLABS_API_KEY=your-elevenlabs-key  # Optional
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_DB=mcp_memory
-POSTGRES_USER=mcp_user
-POSTGRES_PASSWORD=mcp_password
+POSTGRES_DATABASE=coachntt_cognitive_db
+POSTGRES_USER=coachntt_user
+POSTGRES_PASSWORD=coachntt_pass
 ```
 
 ### 3. Start Backend Services
@@ -301,15 +301,34 @@ interface AudioSynthesisResponse {
 
 ## 🔧 Development
 
-### Current Status
+### Current Status (as of 2025-01-11)
 
-The extension currently has basic memory management features but is missing the core conversational UI. See our [Implementation Guide](./IMPLEMENTATION_GUIDE.md) for the detailed roadmap and current development priorities.
+**Backend (MCP Server)**: ✅ Fully operational
+- Memory management with conversational scoring implemented
+- Audio synthesis tools integrated (placeholder service files)
+- PostgreSQL + ChromaDB hybrid storage working
+- All MCP tools functional
+
+**Frontend (VSCode Extension)**: 🚧 UI scaffolding complete, backend integration needed
+- ✅ Extension builds and packages (3.1 MB .vsix)
+- ✅ Basic UI with memory tree view (mock data)
+- ✅ All 18 commands registered
+- ❌ Webview conversational UI not implemented
+- ❌ Audio playback controls not connected
+- ❌ MCP client connection not implemented
+
+**Known Issues**:
+- Audio service files referenced but not implemented (elevenlabs-service.js, etc.)
+- Extension uses placeholder functionality in all commands
+- No real connection between VSCode extension and MCP server yet
+
+See our [Implementation Guide](./IMPLEMENTATION_GUIDE.md) for the detailed roadmap and current development priorities.
 
 **Next Steps:**
-1. Implement webview conversational UI (Week 1)
-2. Add Claude API integration (Week 2)
-3. Build integrated audio player (Week 3)
-4. Add editor integration features (Week 4)
+1. Implement MCP client connection in extension (Week 1)
+2. Create webview conversational UI (Week 1-2)
+3. Connect audio controls to backend (Week 2)
+4. Add real memory operations (Week 2-3)
 
 ### Building from Source
 

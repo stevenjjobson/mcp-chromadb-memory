@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "CoachNTT.ai": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--name", "claude-mcp-memory",
+        "--network", "mcp-chromadb-memory_coachntt-platform-network",
+        "-v", "C:/Users/Steve/Dockers/mcp-chromadb-memory/vault:/vault:rw",
+        "-e", "OPENAI_API_KEY=YOUR_OPENAI_API_KEY_HERE",
+        "-e", "DOCKER_CONTAINER=true",
+        "-e", "CHROMA_HOST=coachntt-chromadb",
+        "-e", "CHROMA_PORT=8000",
+        "-e", "POSTGRES_HOST=coachntt-postgres",
+        "-e", "POSTGRES_PORT=5432",
+        "-e", "POSTGRES_USER=coachntt_user",
+        "-e", "POSTGRES_PASSWORD=coachntt_pass",
+        "-e", "POSTGRES_DATABASE=coachntt_cognitive_db",
+        "-e", "MEMORY_COLLECTION_NAME=coachntt_memories_PRODUCTION",
+        "-e", "MCP_SERVER_NAME=coachntt-cognitive-server",
+        "-e", "MCP_SERVER_VERSION=2.1.0",
+        "-e", "USE_HYBRID_STORAGE=true",
+        "-e", "ENABLE_DUAL_WRITE=true",
+        "-e", "TIER_ENABLED=true",
+        "mcp-chromadb-memory-mcp-memory"
+      ]
+    }
+  }
+}
